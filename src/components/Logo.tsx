@@ -1,4 +1,4 @@
-import logo from "@/assets/heybaby-logo.png";
+import logo from "@/assets/heybaby-logo-v2.png";
 
 export const Logo = ({ className = "" }: { className?: string }) => (
   <div className={`flex items-center ${className}`}>
