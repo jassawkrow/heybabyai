@@ -1,4 +1,4 @@
-import { useState, useMemo } from "@/lib/react-shim";
+import { useState } from "react";
 import { NAMES, BabyName } from "@/data/names";
 import { SwipeCard } from "./SwipeCard";
 import { MatchModal } from "./MatchModal";
