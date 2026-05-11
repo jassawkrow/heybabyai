@@ -1,8 +1,11 @@
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { SwipeDeck } from "@/components/SwipeDeck";
 import { PartnerLobby } from "@/components/PartnerLobby";
 import { PricingCards } from "@/components/PricingCards";
+import { AuthModal } from "@/components/AuthModal";
 import { motion } from "framer-motion";
 import {
   Sparkles, Heart, Users, BrainCircuit, ArrowRight,
@@ -10,6 +13,9 @@ import {
 } from "lucide-react";
 
 const Index = () => {
+  const [authOpen, setAuthOpen] = useState(false);
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen">
       {/* NAV */}
@@ -18,11 +24,12 @@ const Index = () => {
           <Logo />
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold">
             <a href="#how" className="hover:text-primary transition">How it works</a>
+            <Link to="/search" className="hover:text-primary transition">Search</Link>
             <a href="#pricing" className="hover:text-primary transition">Pricing</a>
             <a href="#report" className="hover:text-primary transition">AI Report</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="rounded-full hidden sm:inline-flex">Sign in</Button>
+            <Button variant="ghost" size="sm" className="rounded-full hidden sm:inline-flex" onClick={() => setAuthOpen(true)}>Sign in</Button>
             <Button size="sm" className="rounded-full gradient-hero text-primary-foreground border-0 font-semibold shadow-soft">
               Start swiping
             </Button>
@@ -150,7 +157,7 @@ const Index = () => {
                 Generate a full identity profile for your favorite name — etymology, numerology,
                 and a personality archetype analysis based on cultural psychology.
               </p>
-              <Button size="lg" className="mt-6 rounded-full bg-background text-foreground hover:bg-background/90 font-bold h-14 px-7">
+              <Button size="lg" onClick={() => navigate("/report/aaradhya")} className="mt-6 rounded-full bg-background text-foreground hover:bg-background/90 font-bold h-14 px-7">
                 Preview a sample report
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -191,9 +198,11 @@ const Index = () => {
         </div>
         <PricingCards />
         <p className="text-center text-xs text-muted-foreground mt-6 flex items-center justify-center gap-1.5">
-          <ShieldCheck className="h-3.5 w-3.5" /> Cancel anytime · Secure payments · 7-day refund
+          <ShieldCheck className="h-3.5 w-3.5" /> Cancel anytime · Secure payments · No hidden fees
         </p>
       </section>
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
 
       {/* FOOTER */}
       <footer className="container py-10 border-t border-border/50 mt-10">

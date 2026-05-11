@@ -11,17 +11,35 @@ export type BabyName = {
   gradient: string;
 };
 
+const GRADIENTS = ["gradient-hero", "gradient-warm", "gradient-cool", "gradient-couple"];
+
+export function mapSupabaseName(row: Record<string, unknown>): BabyName {
+  const idx = typeof row.gradient_index === "number" ? row.gradient_index : 1;
+  const keywords = typeof row.keywords === "string" ? row.keywords : "";
+  const firstKeyword = keywords.split("|")[0]?.trim() || "Unique";
+  const gender = row.gender === "girl" ? "girl" : row.gender === "boy" ? "boy" : "neutral";
+  return {
+    id: String(row.slug ?? row.id ?? row.name),
+    name: String(row.name ?? ""),
+    pronunciation: String(row.pronunciation ?? ""),
+    meaning: String(row.meaning_short ?? ""),
+    origin: String(row.origin ?? ""),
+    gender,
+    rank: Number(row.india_rank ?? 9999),
+    vibeScore: Number(row.ai_vibe_score ?? 75),
+    vibe: firstKeyword,
+    gradient: GRADIENTS[((idx - 1) % GRADIENTS.length + GRADIENTS.length) % GRADIENTS.length],
+  };
+}
+
+// Fallback static names used while Supabase loads
 export const NAMES: BabyName[] = [
-  { id: "1", name: "Aria", pronunciation: "AH-ree-uh", meaning: "Air, melody", origin: "Italian", gender: "girl", rank: 23, vibeScore: 94, vibe: "Lyrical", gradient: "gradient-cool" },
-  { id: "2", name: "Kai", pronunciation: "KYE", meaning: "Sea, ocean", origin: "Hawaiian", gender: "neutral", rank: 89, vibeScore: 91, vibe: "Adventurous", gradient: "gradient-hero" },
-  { id: "3", name: "Luna", pronunciation: "LOO-nuh", meaning: "Moon", origin: "Latin", gender: "girl", rank: 11, vibeScore: 96, vibe: "Mystical", gradient: "gradient-couple" },
-  { id: "4", name: "Atlas", pronunciation: "AT-luhs", meaning: "Bearer of the heavens", origin: "Greek", gender: "boy", rank: 134, vibeScore: 88, vibe: "Bold", gradient: "gradient-warm" },
-  { id: "5", name: "Ivy", pronunciation: "EYE-vee", meaning: "Climbing vine", origin: "English", gender: "girl", rank: 56, vibeScore: 89, vibe: "Earthy", gradient: "gradient-cool" },
-  { id: "6", name: "Ezra", pronunciation: "EZ-ruh", meaning: "Helper", origin: "Hebrew", gender: "boy", rank: 31, vibeScore: 92, vibe: "Wise", gradient: "gradient-hero" },
-  { id: "7", name: "Maeve", pronunciation: "MAYV", meaning: "She who intoxicates", origin: "Irish", gender: "girl", rank: 142, vibeScore: 93, vibe: "Regal", gradient: "gradient-couple" },
-  { id: "8", name: "Rumi", pronunciation: "ROO-mee", meaning: "Beauty, friend", origin: "Persian", gender: "neutral", rank: 312, vibeScore: 95, vibe: "Poetic", gradient: "gradient-warm" },
-  { id: "9", name: "Theo", pronunciation: "THEE-oh", meaning: "Divine gift", origin: "Greek", gender: "boy", rank: 42, vibeScore: 90, vibe: "Charming", gradient: "gradient-cool" },
-  { id: "10", name: "Soraya", pronunciation: "soh-RYE-uh", meaning: "Princess, jewel", origin: "Persian", gender: "girl", rank: 891, vibeScore: 87, vibe: "Radiant", gradient: "gradient-warm" },
-  { id: "11", name: "Milo", pronunciation: "MY-loh", meaning: "Soldier, merciful", origin: "Germanic", gender: "boy", rank: 73, vibeScore: 91, vibe: "Playful", gradient: "gradient-hero" },
-  { id: "12", name: "Wren", pronunciation: "REN", meaning: "Small bird", origin: "English", gender: "neutral", rank: 254, vibeScore: 89, vibe: "Free-spirited", gradient: "gradient-couple" },
+  { id: "aarav", name: "Aarav", pronunciation: "AH-rav", meaning: "Peaceful melodious", origin: "Sanskrit", gender: "boy", rank: 1, vibeScore: 96, vibe: "Serene", gradient: "gradient-hero" },
+  { id: "aanya", name: "Aanya", pronunciation: "AHN-yah", meaning: "Graceful limitless", origin: "Sanskrit", gender: "girl", rank: 2, vibeScore: 94, vibe: "Elegant", gradient: "gradient-warm" },
+  { id: "vivaan", name: "Vivaan", pronunciation: "VIH-vaan", meaning: "Full of life", origin: "Sanskrit", gender: "boy", rank: 3, vibeScore: 91, vibe: "Vibrant", gradient: "gradient-cool" },
+  { id: "ananya", name: "Ananya", pronunciation: "ah-NUN-yah", meaning: "Unique matchless", origin: "Sanskrit", gender: "girl", rank: 4, vibeScore: 93, vibe: "Mystic", gradient: "gradient-couple" },
+  { id: "reyansh", name: "Reyansh", pronunciation: "REY-ansh", meaning: "First ray of sunlight", origin: "Sanskrit", gender: "boy", rank: 5, vibeScore: 89, vibe: "Radiant", gradient: "gradient-hero" },
+  { id: "ishaan", name: "Ishaan", pronunciation: "ih-SHAAN", meaning: "Shiva northeast", origin: "Sanskrit", gender: "boy", rank: 6, vibeScore: 88, vibe: "Bold", gradient: "gradient-warm" },
+  { id: "aadya", name: "Aadya", pronunciation: "AAD-yah", meaning: "First primordial", origin: "Sanskrit", gender: "girl", rank: 7, vibeScore: 92, vibe: "Sacred", gradient: "gradient-cool" },
+  { id: "arjun", name: "Arjun", pronunciation: "AR-jun", meaning: "Bright white Pandava", origin: "Sanskrit", gender: "boy", rank: 8, vibeScore: 90, vibe: "Heroic", gradient: "gradient-couple" },
 ];

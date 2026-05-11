@@ -1,10 +1,9 @@
-import { Check, Crown, Sparkles, Users } from "lucide-react";
+import { Check, Crown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
-interface Props {
-  compact?: boolean;
-}
+
+interface Props { compact?: boolean; }
 
 const tiers = [
   {
@@ -17,7 +16,7 @@ const tiers = [
     features: ["20 swipes per day", "Basic name details", "Save up to 5 favorites"],
     cta: "Current plan",
     variant: "ghost" as const,
-    accent: "muted",
+    highlight: false,
   },
   {
     id: "solo",
@@ -30,7 +29,7 @@ const tiers = [
     excluded: ["Partner Match", "AI Identity Report"],
     cta: "Choose Solo",
     variant: "outline" as const,
-    accent: "secondary",
+    highlight: false,
   },
   {
     id: "couple",
@@ -48,7 +47,6 @@ const tiers = [
     ],
     cta: "Get the Couple's Pass",
     variant: "default" as const,
-    accent: "couple",
     highlight: true,
   },
 ];
@@ -74,12 +72,10 @@ export const PricingCards = ({ compact = false }: Props) => (
           </div>
         )}
         <div className="flex items-center justify-between mb-1">
-          <h3 className={`text-xl font-extrabold ${t.highlight ? "" : ""}`}>{t.name}</h3>
-          <span
-            className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full ${
-              t.highlight ? "bg-background/20 text-primary-foreground" : "bg-muted text-muted-foreground"
-            }`}
-          >
+          <h3 className="text-xl font-extrabold">{t.name}</h3>
+          <span className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full ${
+            t.highlight ? "bg-background/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+          }`}>
             {t.badge}
           </span>
         </div>
@@ -100,32 +96,30 @@ export const PricingCards = ({ compact = false }: Props) => (
         <ul className="space-y-2.5 my-5 flex-1">
           {t.features.map((f) => (
             <li key={f} className="flex items-start gap-2.5 text-sm">
-              <span
-                className={`mt-0.5 h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  t.highlight ? "bg-background/25" : "bg-primary/15 text-primary"
-                }`}
-              >
+              <span className={`mt-0.5 h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                t.highlight ? "bg-background/25" : "bg-primary/15 text-primary"
+              }`}>
                 <Check className="h-3 w-3" />
               </span>
-              <span className={t.highlight ? "" : "text-foreground"}>{f}</span>
+              {f}
             </li>
           ))}
           {t.excluded?.map((f) => (
             <li key={f} className="flex items-start gap-2.5 text-sm text-muted-foreground line-through">
-              <span className="mt-0.5 h-5 w-5 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                ✕
-              </span>
+              <span className="mt-0.5 h-5 w-5 rounded-full bg-muted flex items-center justify-center flex-shrink-0">✕</span>
               {f}
             </li>
           ))}
         </ul>
         <Button
           size="lg"
+          onClick={undefined}
+          disabled={t.id === "free"}
           className={`w-full rounded-full font-bold ${
             t.highlight
               ? "bg-background text-foreground hover:bg-background/90"
               : t.id === "free"
-              ? "bg-muted text-muted-foreground hover:bg-muted"
+              ? "bg-muted text-muted-foreground cursor-default"
               : ""
           }`}
           variant={t.highlight ? "default" : t.variant}

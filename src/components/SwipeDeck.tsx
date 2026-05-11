@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { NAMES, BabyName } from "@/data/names";
+import { useState, useEffect } from "react";
+import { BabyName } from "@/data/names";
+import { useNames } from "@/hooks/useNames";
 import { SwipeCard } from "./SwipeCard";
 import { MatchModal } from "./MatchModal";
 import { PaywallModal } from "./PaywallModal";
@@ -10,8 +11,13 @@ import { motion, AnimatePresence } from "framer-motion";
 const FREE_LIMIT = 20;
 
 export const SwipeDeck = () => {
-  const [deck, setDeck] = useState<BabyName[]>(() => [...NAMES]);
+  const { names: allNames, loading } = useNames(50);
+  const [deck, setDeck] = useState<BabyName[]>([]);
   const [history, setHistory] = useState<BabyName[]>([]);
+
+  useEffect(() => {
+    if (allNames.length > 0) setDeck([...allNames]);
+  }, [allNames]);
   const [match, setMatch] = useState<BabyName | null>(null);
   const [paywall, setPaywall] = useState(false);
   const [swipeCount, setSwipeCount] = useState(0);
@@ -47,6 +53,15 @@ export const SwipeDeck = () => {
   const visible = deck.slice(0, 3);
   const remaining = Math.max(0, FREE_LIMIT - swipeCount);
 
+  if (loading) return (
+    <div className="w-full max-w-md mx-auto flex items-center justify-center aspect-[3/4] rounded-[2rem] bg-card border border-border shadow-soft">
+      <div className="text-center">
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="h-10 w-10 rounded-full border-4 border-primary border-t-transparent mx-auto mb-3" />
+        <p className="text-sm text-muted-foreground font-medium">Loading names…</p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="w-full max-w-md mx-auto">
       {/* Header strip */}
@@ -76,7 +91,7 @@ export const SwipeDeck = () => {
               <p className="text-sm text-muted-foreground mt-1 mb-4">
                 {likes} names made your heart skip ✨
               </p>
-              <Button onClick={() => { setDeck([...NAMES]); setHistory([]); }} className="rounded-full">
+              <Button onClick={() => { setDeck([...allNames]); setHistory([]); }} className="rounded-full">
                 Reshuffle deck
               </Button>
             </motion.div>
