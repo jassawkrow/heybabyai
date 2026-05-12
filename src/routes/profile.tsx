@@ -120,26 +120,37 @@ function ProfilePage() {
                 <div className="flex items-center gap-2 text-sm">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" /> Partner connected
                 </div>
-              ) : (
-                <>
-                  <div className="rounded-2xl grad-primary p-5 text-white text-center">
-                    <div className="text-xs font-bold opacity-80">YOUR ROOM CODE</div>
-                    <div className="text-2xl font-extrabold tracking-widest mt-1">HEYBABY-{profile?.room_code}</div>
-                  </div>
-                  <p className="text-xs text-ink/60 mt-3 text-center">Share this link with your partner</p>
-                  <button
-                    disabled={!profile?.room_code}
-                    onClick={() => {
-                      const roomCode = profile?.room_code;
-                      if (!roomCode) return;
-                      navigator.clipboard.writeText(`https://www.heybabyai.com/join/${roomCode}`);
-                      toast.success("Invite link copied!");
-                    }}
-                    className="mt-2 w-full pill bg-cream border border-black/10 py-3 font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-40">
-                    <Copy className="w-4 h-4" /> Copy invite link
-                  </button>
-                </>
-              )}
+              ) : (() => {
+                const inviteLink = profile?.room_code
+                  ? `https://www.heybabyai.com/join/${profile.room_code}`
+                  : null;
+                return (
+                  <>
+                    <div className="rounded-2xl grad-primary p-5 text-white text-center">
+                      <div className="text-xs font-bold opacity-80">YOUR ROOM CODE</div>
+                      <div className="text-2xl font-extrabold tracking-widest mt-1">
+                        HEYBABY-{profile?.room_code ?? "…"}
+                      </div>
+                    </div>
+                    {inviteLink && (
+                      <div className="mt-3 rounded-2xl bg-cream border border-black/8 px-4 py-2.5">
+                        <div className="text-[10px] font-bold text-ink/40 uppercase mb-0.5">Invite link</div>
+                        <p className="text-xs text-ink/70 break-all">{inviteLink}</p>
+                      </div>
+                    )}
+                    <button
+                      disabled={!inviteLink}
+                      onClick={() => {
+                        if (!inviteLink) return;
+                        navigator.clipboard.writeText(inviteLink);
+                        alert("Link copied! Send it to your partner.");
+                      }}
+                      className="mt-2 w-full pill bg-cream border border-black/10 py-3 font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-40">
+                      <Copy className="w-4 h-4" /> Copy invite link
+                    </button>
+                  </>
+                );
+              })()}
             </div>
 
             <div className="rounded-3xl bg-white p-6 shadow-sm grid grid-cols-3 text-center">

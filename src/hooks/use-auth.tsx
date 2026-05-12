@@ -52,6 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }).select().maybeSingle();
       setProfile(created as Profile | null);
     } else {
+      // Backfill room_code for existing users who don't have one
+      if (!data.room_code) {
+        const code = randomRoomCode();
+        await supabase.from("profiles").update({ room_code: code }).eq("id", uid);
+        data.room_code = code;
+      }
       setProfile(data as Profile | null);
     }
   };

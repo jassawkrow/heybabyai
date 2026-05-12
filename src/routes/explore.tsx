@@ -67,13 +67,21 @@ function Explore() {
   }, [user?.id]);
 
   const save = async (n: Tables<"names">) => {
-    if (!user) { location.assign("/profile"); return; }
+    const { data: { user: freshUser } } = await supabase.auth.getUser();
+    if (!freshUser) { location.assign("/profile"); return; }
+    console.log("Saving name:", n.id, n.name, "for user:", freshUser.id);
     const { error } = await supabase.from("swipes").upsert(
-      { user_id: user.id, name_id: n.id, liked: true },
+      { user_id: freshUser.id, name_id: n.id, liked: true },
       { onConflict: "user_id,name_id" }
     );
-    if (error) toast.error(error.message);
-    else { setSavedIds((prev) => new Set([...prev, n.id])); toast.success(`Saved ${n.name} ✦`); }
+    if (error) {
+      console.error("Save error:", error);
+      toast.error(error.message);
+    } else {
+      console.log("Saved successfully");
+      setSavedIds((prev) => new Set([...prev, n.id]));
+      toast.success(`Saved ${n.name} ✦`);
+    }
   };
 
   return (
