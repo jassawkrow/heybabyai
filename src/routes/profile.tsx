@@ -147,6 +147,15 @@ function ProfilePage() {
                           className="mt-2 w-full pill bg-cream border border-black/10 py-3 font-semibold text-sm flex items-center justify-center gap-2">
                           <Copy className="w-4 h-4" /> Copy invite link
                         </button>
+                        <a
+                          href={`https://wa.me/?text=${encodeURIComponent(`Let's name our baby together on HeyBaby AI! Join my room here: ${inviteLink}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 w-full pill flex items-center justify-center gap-2 py-3 font-bold text-sm text-white"
+                          style={{ background: "#25D366" }}
+                        >
+                          Share via WhatsApp 💬
+                        </a>
                       </>
                     ) : (
                       <p className="text-xs text-ink/50 mt-3 text-center">Generating your room code…</p>
