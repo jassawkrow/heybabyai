@@ -5,7 +5,6 @@ import { Check, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { openRazorpay } from "@/lib/razorpay";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({ meta: [{ title: "Pricing — HeyBaby AI" }] }),
@@ -37,22 +36,28 @@ function Pricing() {
 
   const handleSolo = () => {
     if (!user) { toast.error("Sign in first"); location.assign("/profile"); return; }
-    openRazorpay({
+    new (window as any).Razorpay({
+      key: 'rzp_live_SoOeytbTsOs2Pb',
       amount: 29900,
-      description: "Solo Pass - 30 days unlimited",
-      email: user.email ?? "",
-      onSuccess: (r: any) => updateTier("solo", 30, r.razorpay_payment_id, 29900),
-    });
+      currency: 'INR',
+      name: 'HeyBaby AI',
+      description: 'Solo Pass - 30 days',
+      theme: { color: '#1DAFB6' },
+      handler: (r: any) => alert('Payment successful!')
+    }).open();
   };
 
   const handleCouple = () => {
     if (!user) { toast.error("Sign in first"); location.assign("/profile"); return; }
-    openRazorpay({
+    new (window as any).Razorpay({
+      key: 'rzp_live_SoOeytbTsOs2Pb',
       amount: 79900,
+      currency: 'INR',
+      name: 'HeyBaby AI',
       description: "Couple's Pass - 6 months",
-      email: user.email ?? "",
-      onSuccess: (r: any) => updateTier("couple", 180, r.razorpay_payment_id, 79900),
-    });
+      theme: { color: '#1DAFB6' },
+      handler: (r: any) => alert('Payment successful!')
+    }).open();
   };
 
   const currentTier = profile?.tier ?? "free";
