@@ -31,6 +31,20 @@ function ReportPage() {
     if (profile?.tier === "couple") setUnlocked(true);
   }, [profile?.tier]);
 
+  // Restore unlock state if user has already paid for a report
+  useEffect(() => {
+    if (!user || unlocked) return;
+    supabase
+      .from("payments")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("tier", "report")
+      .eq("status", "paid")
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => { if (data) setUnlocked(true); });
+  }, [user?.id]);
+
   useEffect(() => {
     if (!name) return;
     setQuery(name);

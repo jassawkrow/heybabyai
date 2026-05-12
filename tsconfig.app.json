@@ -17,6 +17,7 @@
 
     /* Linting */
     "strict": false,
+    "strictNullChecks": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitAny": false,
@@ -26,5 +27,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/server.ts", "src/start.ts", "src/integrations/supabase/auth-middleware.ts"]
 }

@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const ORIGINS = ["Sanskrit", "Tamil", "Telugu", "Hindi", "Arabic", "Persian", "Modern"];
 const GENDERS = ["All", "Girl", "Boy", "Unisex"];
@@ -18,6 +18,8 @@ export function SearchAndFilters({
   onChange: (s: FilterState) => void;
 }) {
   const [local, setLocal] = useState(state.q);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   return (
     <div className="space-y-3">
       <div className="glass pill flex items-center gap-3 px-5 py-3 shadow-sm">
@@ -28,7 +30,7 @@ export function SearchAndFilters({
             setLocal(e.target.value);
             // debounce
             clearTimeout((window as any).__hbq);
-            (window as any).__hbq = setTimeout(() => onChange({ ...state, q: e.target.value }), 350);
+            (window as any).__hbq = setTimeout(() => onChange({ ...stateRef.current, q: e.target.value }), 350);
           }}
           placeholder="Search 2,278 names… try Aria, Tamil, sacred"
           className="flex-1 bg-transparent outline-none text-sm placeholder:text-ink/40"
