@@ -121,33 +121,36 @@ function ProfilePage() {
                   <span className="w-2 h-2 rounded-full bg-emerald-500" /> Partner connected
                 </div>
               ) : (() => {
-                const inviteLink = profile?.room_code
-                  ? `https://www.heybabyai.com/join/${profile.room_code}`
-                  : null;
+                const roomCode = profile?.room_code || "";
+                const inviteLink = roomCode
+                  ? `https://www.heybabyai.com/join/${roomCode}`
+                  : "";
                 return (
                   <>
                     <div className="rounded-2xl grad-primary p-5 text-white text-center">
                       <div className="text-xs font-bold opacity-80">YOUR ROOM CODE</div>
                       <div className="text-2xl font-extrabold tracking-widest mt-1">
-                        HEYBABY-{profile?.room_code ?? "…"}
+                        {roomCode ? `HEYBABY-${roomCode}` : "Generating…"}
                       </div>
                     </div>
-                    {inviteLink && (
-                      <div className="mt-3 rounded-2xl bg-cream border border-black/8 px-4 py-2.5">
-                        <div className="text-[10px] font-bold text-ink/40 uppercase mb-0.5">Invite link</div>
-                        <p className="text-xs text-ink/70 break-all">{inviteLink}</p>
-                      </div>
+                    {roomCode ? (
+                      <>
+                        <div className="mt-3 rounded-2xl bg-cream border border-black/8 px-4 py-2.5">
+                          <div className="text-[10px] font-bold text-ink/40 uppercase mb-0.5">Invite link</div>
+                          <p className="text-xs text-ink/70" style={{ wordBreak: "break-all" }}>{inviteLink}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(inviteLink);
+                            alert("Copied! Send this to your partner.");
+                          }}
+                          className="mt-2 w-full pill bg-cream border border-black/10 py-3 font-semibold text-sm flex items-center justify-center gap-2">
+                          <Copy className="w-4 h-4" /> Copy invite link
+                        </button>
+                      </>
+                    ) : (
+                      <p className="text-xs text-ink/50 mt-3 text-center">Generating your room code…</p>
                     )}
-                    <button
-                      disabled={!inviteLink}
-                      onClick={() => {
-                        if (!inviteLink) return;
-                        navigator.clipboard.writeText(inviteLink);
-                        alert("Link copied! Send it to your partner.");
-                      }}
-                      className="mt-2 w-full pill bg-cream border border-black/10 py-3 font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-40">
-                      <Copy className="w-4 h-4" /> Copy invite link
-                    </button>
                   </>
                 );
               })()}
