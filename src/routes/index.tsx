@@ -169,6 +169,11 @@ function Footer() {
       <div className="max-w-5xl mx-auto text-center text-[11px] mt-6 text-ink/40">
         All sales final · No refunds on digital purchases · hello@heybabyai.com
       </div>
+      <div className="max-w-5xl mx-auto text-center text-[11px] mt-3 flex items-center justify-center gap-4 text-ink/35">
+        <Link to="/privacy" className="hover:text-ink/60 transition">Privacy Policy</Link>
+        <span>·</span>
+        <Link to="/terms" className="hover:text-ink/60 transition">Terms of Service</Link>
+      </div>
     </footer>
   );
 }
