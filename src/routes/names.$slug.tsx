@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { gradientFor } from "@/lib/gradients";
+import { openRazorpay } from "@/lib/razorpay";
 import { ArrowRight } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -11,7 +12,7 @@ export const Route = createFileRoute("/names/$slug")({
     const { data } = await supabase
       .from("names")
       .select("*")
-      .eq("slug", slug)
+      .eq("slug", slug.toLowerCase())
       .maybeSingle();
     return data as Tables<"names"> | null;
   },
@@ -19,9 +20,7 @@ export const Route = createFileRoute("/names/$slug")({
     if (!name) return { meta: [{ title: "Name Not Found | HeyBaby AI" }] };
     return {
       meta: [
-        {
-          title: `${name.name} Baby Name — Meaning, Numerology & More | HeyBaby AI`,
-        },
+        { title: `${name.name} Baby Name — Meaning, Numerology & More | HeyBaby AI` },
         {
           name: "description",
           content: `${name.name} means ${name.meaning_short ?? ""}. Origin: ${name.origin}. Numerology: ${name.numerology ?? "—"}. Rasi: ${name.rasi ?? "—"}. Discover more Indian baby names on HeyBaby AI.`,
@@ -41,6 +40,7 @@ export const Route = createFileRoute("/names/$slug")({
 
 function NamePage() {
   const name = Route.useLoaderData();
+  const navigate = useNavigate();
 
   if (!name) {
     return (
@@ -48,6 +48,7 @@ function NamePage() {
         <Header />
         <div className="max-w-2xl mx-auto px-5 pt-20 text-center">
           <h1 className="text-3xl font-extrabold">Name not found</h1>
+          <p className="text-ink/60 mt-2 text-sm">This name might be spelled differently in our database.</p>
           <Link to="/explore" className="mt-6 inline-block pill grad-primary text-white px-6 py-3 font-semibold text-sm">
             Explore names →
           </Link>
@@ -63,34 +64,44 @@ function NamePage() {
     headline: `${name.name} Baby Name Meaning`,
     description: `${name.name} means ${name.meaning_short}. Origin: ${name.origin}. Numerology number ${name.numerology ?? "—"}.`,
     url: `https://www.heybabyai.com/names/${name.slug}`,
-    publisher: {
-      "@type": "Organization",
-      name: "HeyBaby AI",
-      url: "https://www.heybabyai.com",
-    },
-    about: {
-      "@type": "Thing",
-      name: name.name,
-      description: name.meaning_long ?? name.meaning_short ?? "",
-    },
+    publisher: { "@type": "Organization", name: "HeyBaby AI", url: "https://www.heybabyai.com" },
+    about: { "@type": "Thing", name: name.name, description: name.meaning_long ?? name.meaning_short ?? "" },
+  };
+
+  const handleUnlock = () => {
+    openRazorpay({
+      amount: 49900,
+      description: `AI Identity Report — ${name.name}`,
+      onSuccess: async (r: any) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from("payments").insert({
+            user_id: user.id,
+            amount_paise: 49900,
+            tier: "report",
+            razorpay_payment_id: r.razorpay_payment_id,
+            status: "paid",
+          });
+        }
+        navigate({ to: "/report", search: { name: name.name } });
+      },
+    });
   };
 
   return (
     <div className="min-h-screen">
       <Header />
 
-      {/* JSON-LD structured data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
       <div className="max-w-2xl mx-auto px-5 pt-8 pb-32 space-y-5">
-        {/* Hero gradient card */}
+
+        {/* ── FREE: Hero ── */}
         <div className={`${gradientFor(name.gradient_index)} rounded-3xl text-white p-8 text-center`}>
-          <div className="text-[10px] font-extrabold tracking-[0.3em] opacity-70">
-            HEYBABY · BABY NAME
-          </div>
+          <div className="text-[10px] font-extrabold tracking-[0.3em] opacity-70">HEYBABY · BABY NAME</div>
           <h1 className="text-6xl font-extrabold mt-4 tracking-tight">{name.name}</h1>
           {name.pronunciation && (
             <div className="italic mt-2 text-white/90 text-sm">/{name.pronunciation}/</div>
@@ -104,15 +115,12 @@ function NamePage() {
           </div>
         </div>
 
-        {/* Meaning */}
+        {/* ── FREE: Meaning short ── */}
         <Section title="Meaning">
           <p className="text-lg font-semibold">{name.meaning_short}</p>
-          {name.meaning_long && (
-            <p className="mt-3 text-ink/75 leading-relaxed">{name.meaning_long}</p>
-          )}
         </Section>
 
-        {/* Origin & culture */}
+        {/* ── FREE: Origin ── */}
         <Section title="Origin & Culture">
           <p className="text-ink/75">
             <strong>{name.name}</strong> is a <strong>{name.gender}</strong> name of{" "}
@@ -121,72 +129,137 @@ function NamePage() {
           </p>
         </Section>
 
-        {/* Numerology */}
-        {name.numerology != null && (
-          <Section title="Numerology">
-            <div className="flex items-center gap-5">
-              <div className="w-20 h-20 rounded-full grad-4 text-white flex items-center justify-center text-3xl font-extrabold shrink-0">
-                {name.numerology}
-              </div>
-              <p className="text-sm text-ink/75">
-                Life Path Number {name.numerology}. People with this vibration are intuitive,
-                expressive, and naturally creative. Lucky day: Wednesday · Lucky color: Teal.
-              </p>
-            </div>
-          </Section>
-        )}
-
-        {/* Vedic Astrology */}
-        {(name.rasi || name.star) && (
-          <Section title="Vedic Astrology">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              {name.rasi && <Field label="Rasi" value={name.rasi} />}
-              {name.star && <Field label="Nakshatra" value={name.star} />}
-            </div>
-          </Section>
-        )}
-
-        {/* Personality */}
-        {name.personality && (
-          <Section title="Personality Archetype">
-            <div className="text-2xl font-extrabold text-grad-primary">{name.personality}</div>
-            {name.keywords && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                {name.keywords.split(",").map((k, i) => (
-                  <span key={i} className={`pill px-3 py-1 text-xs font-semibold text-white ${gradientFor(i)}`}>
-                    {k.trim()}
-                  </span>
-                ))}
-              </div>
-            )}
-          </Section>
-        )}
-
-        {/* Fun fact */}
-        {name.meaning_long && (
-          <Section title="✦ Fun Fact" className="border-2 border-gold/40 bg-gold/10">
-            <p className="text-sm text-ink/75 leading-relaxed">{name.meaning_long}</p>
-          </Section>
-        )}
-
-        {/* CTA */}
-        <div className="rounded-3xl grad-primary text-white p-7 text-center">
-          <h2 className="text-xl font-extrabold">Find more names like {name.name}</h2>
-          <p className="text-white/80 text-sm mt-2">
-            Swipe through 2,278 Indian names with your partner. Match in real time.
+        {/* ── FREE: Swipe CTA ── */}
+        <div className="rounded-3xl bg-white border border-black/8 p-6 text-center shadow-sm">
+          <p className="text-sm text-ink/65 mb-3">
+            Find names you both love — swipe together with your partner.
           </p>
           <Link
             to="/swipe"
-            className="mt-4 inline-flex items-center gap-2 pill bg-white text-purple font-semibold px-6 py-3 text-sm hover:scale-[1.02] transition"
+            className="inline-flex items-center gap-2 pill grad-primary text-white font-semibold px-6 py-3 text-sm hover:scale-[1.02] transition"
           >
-            Start swiping free <ArrowRight className="w-4 h-4" />
+            Start swiping free on HeyBaby AI <ArrowRight className="w-4 h-4" />
           </Link>
-          <div className="mt-3">
-            <Link to="/report" search={{ name: name.name }} className="text-white/70 text-xs underline">
-              Get AI Identity Report for {name.name} →
-            </Link>
+        </div>
+
+        {/* ── PREMIUM PREVIEW CARD ── */}
+        <div style={{
+          background: "linear-gradient(135deg,#1DAFB6,#7928A3)",
+          borderRadius: "20px",
+          padding: "24px",
+          color: "white",
+        }}>
+          <div style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "2px", opacity: 0.8, marginBottom: "8px" }}>
+            ✦ PREMIUM AI IDENTITY REPORT
+          </div>
+          <h2 style={{ fontSize: "24px", fontWeight: 800, marginBottom: "16px" }}>
+            More than just a name.
+          </h2>
+          <div style={{ display: "grid", gap: "12px", fontSize: "14px" }}>
+            <div>📖 Full etymology and cultural history</div>
+            <div>🔢 Numerology — life path, lucky number, color, day</div>
+            <div>⭐ Vedic astrology — Rasi, Nakshatra, element</div>
+            <div>🎭 Personality archetype analysis</div>
+            <div>✨ Famous bearers and cultural significance</div>
+            <div>📄 Downloadable PDF certificate</div>
+          </div>
+          <div style={{
+            marginTop: "20px",
+            background: "rgba(255,255,255,0.2)",
+            borderRadius: "12px",
+            padding: "12px",
+            textAlign: "center",
+          }}>
+            <span style={{ fontSize: "28px", fontWeight: 800 }}>₹499</span>
+            <span style={{ opacity: 0.8 }}> one-time · or FREE with Couple's Pass</span>
           </div>
         </div>
+
+        {/* ── LOCKED sections ── */}
+        <div style={{ position: "relative", overflow: "hidden", borderRadius: "16px" }}>
+          {/* Blurred content behind the overlay */}
+          <div style={{ filter: "blur(6px)", pointerEvents: "none" }}>
+            <div style={{ background: "white", padding: "24px", marginBottom: "12px", borderRadius: "16px" }}>
+              <div style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "4px", color: "#888", marginBottom: "12px" }}>NUMEROLOGY</div>
+              <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg,#1DAFB6,#7928A3)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "32px", fontWeight: 800, flexShrink: 0 }}>
+                  {name.numerology ?? "7"}
+                </div>
+                <p style={{ fontSize: "14px", color: "#555" }}>
+                  Life Path Number {name.numerology ?? "7"}. Lucky day: Wednesday · Lucky color: Teal · Lucky stone: Emerald.
+                  People with this vibration are intuitive, expressive, and naturally creative.
+                </p>
+              </div>
+            </div>
+            <div style={{ background: "white", padding: "24px", marginBottom: "12px", borderRadius: "16px" }}>
+              <div style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "4px", color: "#888", marginBottom: "12px" }}>VEDIC ASTROLOGY</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div style={{ background: "#fef9f0", borderRadius: "12px", padding: "12px" }}><div style={{ fontSize: "10px", fontWeight: 700, color: "#888" }}>RASI</div><div style={{ fontWeight: 600 }}>{name.rasi ?? "Mesha"}</div></div>
+                <div style={{ background: "#fef9f0", borderRadius: "12px", padding: "12px" }}><div style={{ fontSize: "10px", fontWeight: 700, color: "#888" }}>NAKSHATRA</div><div style={{ fontWeight: 600 }}>{name.star ?? "Ashwini"}</div></div>
+              </div>
+            </div>
+            <div style={{ background: "white", padding: "24px", borderRadius: "16px" }}>
+              <div style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "4px", color: "#888", marginBottom: "12px" }}>PERSONALITY ARCHETYPE</div>
+              <div style={{ fontSize: "22px", fontWeight: 800, background: "linear-gradient(135deg,#1DAFB6,#7928A3)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                {name.personality ?? "The Visionary"}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap" as const, gap: "8px", marginTop: "12px" }}>
+                {(name.keywords ?? "creative,intuitive,bold").split(",").slice(0, 4).map((k, i) => (
+                  <span key={i} className={`pill px-3 py-1 text-xs font-semibold text-white ${gradientFor(i)}`}>{k.trim()}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Lock overlay */}
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", flexDirection: "column" as const,
+            alignItems: "center", justifyContent: "center",
+            background: "rgba(254,251,245,0.85)",
+            borderRadius: "16px",
+            border: "2px solid #1DAFB6",
+          }}>
+            <div style={{ fontSize: "32px" }}>🔒</div>
+            <h3 style={{
+              fontWeight: 800,
+              background: "linear-gradient(135deg,#1DAFB6,#7928A3)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              margin: "8px 0",
+            }}>
+              AI Identity Report
+            </h3>
+            <p style={{ color: "#4a3a52", textAlign: "center", padding: "0 20px", fontSize: "14px", lineHeight: 1.5 }}>
+              Get the complete numerology analysis,
+              Vedic astrology, personality archetype
+              and cultural deep-dive for {name.name}
+            </p>
+            <button
+              onClick={handleUnlock}
+              style={{
+                background: "linear-gradient(135deg,#1DAFB6,#7928A3)",
+                color: "white",
+                padding: "12px 32px",
+                borderRadius: "100px",
+                fontWeight: 700,
+                fontSize: "16px",
+                margin: "16px 0 8px",
+                cursor: "pointer",
+                border: "none",
+              }}
+            >
+              Unlock Full Report — ₹499
+            </button>
+            <p style={{ fontSize: "12px", color: "#8a7a8c", margin: 0 }}>
+              One-time payment · Download PDF · No refunds
+            </p>
+            <p style={{ fontSize: "11px", color: "#1DAFB6", marginTop: "8px" }}>
+              FREE with Couple's Pass 💕
+            </p>
+          </div>
+        </div>
+
       </div>
       <BottomNav />
     </div>
@@ -199,14 +272,5 @@ function Section({ title, children, className = "" }: { title: string; children:
       <div className="text-[10px] font-extrabold tracking-widest text-ink/50 uppercase mb-3">{title}</div>
       {children}
     </section>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl bg-cream p-3">
-      <div className="text-[10px] font-bold text-ink/50 uppercase">{label}</div>
-      <div className="font-semibold mt-0.5">{value}</div>
-    </div>
   );
 }
