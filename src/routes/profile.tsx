@@ -13,7 +13,7 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, refreshProfile } = useAuth();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const navigate = useNavigate();
@@ -28,11 +28,21 @@ function ProfilePage() {
     }
   }, [user]);
 
+  // Generate room_code client-side if missing (fallback for existing users)
+  useEffect(() => {
+    if (!user || !profile) return;
+    if (!profile.room_code) {
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      supabase.from("profiles").update({ room_code: code }).eq("id", user.id)
+        .then(() => refreshProfile());
+    }
+  }, [user?.id, profile?.room_code]);
+
   const sendMagic = async (e: React.FormEvent) => {
     e.preventDefault();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: typeof window !== "undefined" ? window.location.origin + "/profile" : undefined },
+      options: { emailRedirectTo: "https://www.heybabyai.com/profile" },
     });
     if (error) toast.error(error.message); else setSent(true);
   };
@@ -95,12 +105,14 @@ function ProfilePage() {
                   </div>
                   <p className="text-xs text-ink/60 mt-3 text-center">Share this link with your partner</p>
                   <button
+                    disabled={!profile?.room_code}
                     onClick={() => {
-                      const link = `https://www.heybabyai.com/join/${profile?.room_code}`;
-                      navigator.clipboard.writeText(link);
+                      const roomCode = profile?.room_code;
+                      if (!roomCode) return;
+                      navigator.clipboard.writeText(`https://www.heybabyai.com/join/${roomCode}`);
                       toast.success("Invite link copied!");
                     }}
-                    className="mt-2 w-full pill bg-cream border border-black/10 py-3 font-semibold text-sm flex items-center justify-center gap-2">
+                    className="mt-2 w-full pill bg-cream border border-black/10 py-3 font-semibold text-sm flex items-center justify-center gap-2 disabled:opacity-40">
                     <Copy className="w-4 h-4" /> Copy invite link
                   </button>
                 </>
