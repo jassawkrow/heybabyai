@@ -74,6 +74,19 @@ function Landing() {
         </div>
       </section>
 
+      <section className="max-w-5xl mx-auto px-5 sm:px-6 pb-16">
+        <div className="rounded-3xl text-white px-8 py-10 sm:py-12 text-center" style={{ background: "linear-gradient(135deg, #1DAFB6 0%, #9B59B6 100%)" }}>
+          <h2 className="text-3xl sm:text-4xl font-extrabold">Decode your baby's name</h2>
+          <p className="mt-3 text-white/85 max-w-md mx-auto text-sm sm:text-base">
+            Get a full AI Identity Report — numerology, Vedic astrology, personality archetype and more
+          </p>
+          <Link to="/report" className="mt-6 inline-flex items-center gap-2 pill bg-white text-purple font-semibold px-7 py-3.5 text-sm hover:scale-[1.02] active:scale-[0.97] transition">
+            Get AI Identity Report →
+          </Link>
+          <div className="mt-3 text-xs text-white/60">Free preview · Full report ₹499</div>
+        </div>
+      </section>
+
       <section className="max-w-5xl mx-auto px-5 sm:px-6 pb-20">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <FeatureCard icon={Heart} grad="grad-2" title="Swipe what you love" body="Right for love, left for pass. Your taste shapes the deck." />

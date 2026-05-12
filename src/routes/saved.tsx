@@ -24,10 +24,11 @@ function SavedPage() {
     (async () => {
       const { data } = await supabase
         .from("swipes")
-        .select("created_at, name:names(*)")
-        .eq("user_id", user.id).eq("liked", true)
+        .select("name_id, names(*)")
+        .eq("user_id", user.id)
+        .eq("liked", true)
         .order("created_at", { ascending: false });
-      const names = (data ?? []).map((r: any) => r.name).filter(Boolean) as Tables<"names">[];
+      const names = (data ?? []).map((r: any) => r.names).filter(Boolean) as Tables<"names">[];
       setItems(names);
     })();
   }, [user]);

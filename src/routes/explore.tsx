@@ -58,10 +58,22 @@ function Explore() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [loading, done]);
 
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("swipes").select("name_id").eq("user_id", user.id).eq("liked", true)
+      .then(({ data }) => setSavedIds(new Set((data ?? []).map((r: any) => r.name_id))));
+  }, [user?.id]);
+
   const save = async (n: Tables<"names">) => {
-    if (!user) return toast("Sign in to save names");
-    const { error } = await supabase.from("swipes").insert({ user_id: user.id, name_id: n.id, liked: true });
-    if (error) toast.error(error.message); else toast.success(`Saved ${n.name} ✦`);
+    if (!user) { location.assign("/profile"); return; }
+    const { error } = await supabase.from("swipes").upsert(
+      { user_id: user.id, name_id: n.id, liked: true },
+      { onConflict: "user_id,name_id" }
+    );
+    if (error) toast.error(error.message);
+    else { setSavedIds((prev) => new Set([...prev, n.id])); toast.success(`Saved ${n.name} ✦`); }
   };
 
   return (
@@ -88,7 +100,7 @@ function Explore() {
           <div className="text-center py-20 text-ink/60">No names match those filters. Try clearing them.</div>
         )}
       </div>
-      <NameSheet name={active} onClose={() => setActive(null)} onSave={save} />
+      <NameSheet name={active} onClose={() => setActive(null)} onSave={save} saved={savedIds.has(active?.id ?? 0)} />
       <BottomNav />
     </div>
   );

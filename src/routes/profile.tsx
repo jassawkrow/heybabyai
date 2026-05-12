@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Copy, LogOut, Zap } from "lucide-react";
@@ -16,6 +16,17 @@ function ProfilePage() {
   const { user, profile, signOut } = useAuth();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      const pending = localStorage.getItem("pendingRoomCode");
+      if (pending) {
+        localStorage.removeItem("pendingRoomCode");
+        navigate({ to: "/join/$code", params: { code: pending } });
+      }
+    }
+  }, [user]);
 
   const sendMagic = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +96,7 @@ function ProfilePage() {
                   <p className="text-xs text-ink/60 mt-3 text-center">Share this link with your partner</p>
                   <button
                     onClick={() => {
-                      const link = `${window.location.origin}/join/${profile?.room_code}`;
+                      const link = `https://www.heybabyai.com/join/${profile?.room_code}`;
                       navigator.clipboard.writeText(link);
                       toast.success("Invite link copied!");
                     }}

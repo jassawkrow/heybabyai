@@ -32,11 +32,13 @@ export function NameSheet({
   onClose,
   onSave,
   onPass,
+  saved,
 }: {
   name: N | null;
   onClose: () => void;
   onSave?: (n: N) => void;
   onPass?: (n: N) => void;
+  saved?: boolean;
 }) {
   return (
     <AnimatePresence>
@@ -120,9 +122,9 @@ export function NameSheet({
               </button>
               <button
                 onClick={() => { onSave?.(name); onClose(); }}
-                className="flex-1 pill grad-2 text-white py-3 text-sm font-semibold flex items-center justify-center gap-2"
+                className={`flex-1 pill py-3 text-sm font-semibold flex items-center justify-center gap-2 ${saved ? "bg-pink-100 text-pink-500 border border-pink-200" : "grad-2 text-white"}`}
               >
-                <Heart className="w-4 h-4" /> Save
+                <Heart className={`w-4 h-4 ${saved ? "fill-pink-500" : ""}`} /> {saved ? "Saved ✦" : "Save"}
               </button>
               <Link
                 to="/report"

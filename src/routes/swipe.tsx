@@ -78,7 +78,7 @@ function Swipe() {
     setHistory((h) => [{ name: top, liked }, ...h]);
     setDeck((d) => d.slice(1));
 
-    await supabase.from("swipes").insert({ user_id: user.id, name_id: top.id, liked });
+    await supabase.from("swipes").upsert({ user_id: user.id, name_id: top.id, liked }, { onConflict: "user_id,name_id" });
     if (profile?.tier === "free") {
       await supabase.from("profiles").update({ daily_swipes: (profile.daily_swipes ?? 0) + 1 }).eq("id", user.id);
       refreshProfile();
