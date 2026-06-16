@@ -127,7 +127,7 @@ export function SearchAndFilters({
                 350
               );
             }}
-            placeholder='Search 8,000+ names… try "Aria", Tamil, sacred'
+            placeholder='Search 100,000+ names… try "Aria", Tamil, sacred'
             className="flex-1 bg-transparent outline-none text-sm placeholder:text-ink/40"
           />
           {localQ && (

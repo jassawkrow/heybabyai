@@ -18,7 +18,7 @@ function About() {
           falling in love — together.
         </p>
         <p className="text-ink/70 mt-4 leading-relaxed">
-          Our deck of <b>8,000+ carefully curated names from around the world</b> — Sanskrit, Tamil, Telugu, Hindi, Arabic, Persian, English, French, Japanese, and more —
+          Our deck of <b>100,000+ carefully curated names from around the world</b> — Sanskrit, Tamil, Telugu, Hindi, Arabic, Persian, English, French, Japanese, and more —
           comes with AI Vibe Scores, numerology, Vedic astrology, and personality archetypes. Swipe with your partner in
           real time, and the moment you both fall for the same name, we'll celebrate with you.
         </p>

@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "HeyBaby AI — Your Baby's Name Starts Here" },
-      { name: "description", content: "Swipe through 8,000+ names from cultures around the world. Match with your partner. Guided by AI." },
+      { name: "description", content: "Swipe through 100,000+ names from cultures around the world. Match with your partner. Guided by AI." },
     ],
   }),
   component: Landing,
@@ -55,14 +55,14 @@ function Landing() {
       <Helmet>
         <title>HeyBaby AI — Your Baby's Name Starts Here</title>
         <meta property="og:title" content="HeyBaby AI — Your Baby's Name Starts Here" />
-        <meta property="og:description" content="Swipe through 8,000+ names from cultures around the world. Match with your partner. Guided by AI." />
+        <meta property="og:description" content="Swipe through 100,000+ names from cultures around the world. Match with your partner. Guided by AI." />
         <meta property="og:url" content="https://heybabyai.com" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="HeyBaby AI" />
         <meta property="og:image" content="https://heybabyai.com/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="HeyBaby AI — Your Baby's Name Starts Here" />
-        <meta name="twitter:description" content="Swipe through 8,000+ names from cultures around the world. Match with your partner. Guided by AI." />
+        <meta name="twitter:description" content="Swipe through 100,000+ names from cultures around the world. Match with your partner. Guided by AI." />
         <meta name="twitter:image" content="https://heybabyai.com/og-image.png" />
       </Helmet>
 
@@ -81,7 +81,7 @@ function Landing() {
           Your Baby's Name <span className="text-grad-primary">Starts Here</span>
         </h1>
         <p className="mt-5 max-w-xl mx-auto text-[15px] sm:text-base text-ink/65">
-          Swipe through 8,000+ names from cultures around the world. Match with your partner. Guided by AI.
+          Swipe through 100,000+ names from cultures around the world. Match with your partner. Guided by AI.
         </p>
 
         <div className="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
@@ -97,7 +97,7 @@ function Landing() {
           <div className="glass pill flex items-center gap-3 px-5 py-3.5">
             <Search className="w-4 h-4 text-ink/50" />
             <Link to="/explore" className="flex-1 text-left text-sm text-ink/40">
-              Search 8,000+ names… try Aria, Tamil, sacred
+              Search 100,000+ names… try Aria, Tamil, sacred
             </Link>
           </div>
         </div>
