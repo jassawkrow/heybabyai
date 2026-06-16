@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel
+
+# Python db scripts / one-off utilities
+__pycache__/
+*.py
+*.sql
+existing_slugs*.txt
+.claude/

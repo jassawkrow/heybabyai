@@ -36,7 +36,7 @@ function TermsPage() {
             <ul className="space-y-2 list-disc list-inside text-ink/75">
               <li><strong>Solo Pass (₹299)</strong> — 30 days unlimited swipes for one user</li>
               <li><strong>Couple's Pass (₹799)</strong> — 6 months unlimited for two partners</li>
-              <li><strong>AI Identity Report (₹499)</strong> — one-time per name, instant access</li>
+              <li><strong>AI Identity Report (₹199)</strong> — one-time per name, instant access</li>
             </ul>
             <p className="mt-3 font-semibold">All sales are final. No refunds on digital purchases.</p>
             <p className="mt-2">

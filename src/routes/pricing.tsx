@@ -12,51 +12,87 @@ export const Route = createFileRoute("/pricing")({
 });
 
 function Pricing() {
-  const { user, profile, refreshProfile } = useAuth();
-
-  const updateTier = async (tier: "solo" | "couple", days: number, paymentId: string, amount: number) => {
-    if (!user) return;
-    const expires = new Date();
-    expires.setDate(expires.getDate() + days);
-    await supabase.from("profiles").update({
-      tier,
-      tier_expires_at: expires.toISOString(),
-    }).eq("id", user.id);
-    await supabase.from("payments").insert({
-      user_id: user.id,
-      amount_paise: amount,
-      tier,
-      razorpay_payment_id: paymentId,
-      status: "paid",
-    });
-    await refreshProfile();
-    toast.success(`Welcome to ${tier === "solo" ? "Solo Pass" : "Couple's Pass"}! 🎉`);
-    setTimeout(() => location.reload(), 1500);
-  };
+  const { user, profile } = useAuth();
 
   const handleSolo = () => {
     if (!user) { toast.error("Sign in first"); location.assign("/profile"); return; }
     new (window as any).Razorpay({
-      key: 'rzp_live_SoOeytbTsOs2Pb',
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: 29900,
       currency: 'INR',
       name: 'HeyBaby AI',
       description: 'Solo Pass - 30 days',
+      payment_capture: 1,
       theme: { color: '#1DAFB6' },
-      handler: (r: any) => alert('Payment successful!')
+      handler: async (response: any) => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('Not logged in');
+          const tierValue = 'solo';
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              tier: tierValue,
+              tier_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            })
+            .eq('id', user.id);
+          if (error) throw error;
+          await supabase.from('payments').insert({
+            user_id: user.id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id || null,
+            amount_paise: 29900,
+            tier: tierValue,
+            status: 'paid',
+          });
+          toast.success('You are now on Solo Pass!');
+          window.location.reload();
+        } catch (err) {
+          toast.error('Payment recorded but upgrade failed. Contact support.');
+          console.error(err);
+        }
+      },
     }).open();
   };
 
   const handleCouple = () => {
     if (!user) { toast.error("Sign in first"); location.assign("/profile"); return; }
     new (window as any).Razorpay({
-      key: 'rzp_live_SoOeytbTsOs2Pb',
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: 79900,
       currency: 'INR',
       name: 'HeyBaby AI',
       description: "Couple's Pass - 6 months",
+      payment_capture: 1,
       theme: { color: '#1DAFB6' },
-      handler: (r: any) => alert('Payment successful!')
+      handler: async (response: any) => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('Not logged in');
+          const tierValue = 'couple';
+          const { error } = await supabase
+            .from('profiles')
+            .update({
+              tier: tierValue,
+              tier_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            })
+            .eq('id', user.id);
+          if (error) throw error;
+          await supabase.from('payments').insert({
+            user_id: user.id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_order_id: response.razorpay_order_id || null,
+            amount_paise: 79900,
+            tier: tierValue,
+            status: 'paid',
+          });
+          toast.success("You are now on Couple Pass!");
+          window.location.reload();
+        } catch (err) {
+          toast.error('Payment recorded but upgrade failed. Contact support.');
+          console.error(err);
+        }
+      },
     }).open();
   };
 
@@ -79,7 +115,7 @@ function Pricing() {
               ["Basic name search", true],
               ["Save up to 5 favorites", true],
               ["Partner match", false],
-              ["AI Report (₹499 each)", false],
+              ["AI Report (₹199 each)", false],
             ]}
             cta={currentTier === "free" ? "Current plan" : "Free plan"}
             ctaClass="bg-cream border border-black/10 text-ink/70"
@@ -94,7 +130,7 @@ function Pricing() {
               ["All filters unlocked", true],
               ["Save unlimited names", true],
               ["Partner match engine", false],
-              ["AI Report (₹499 each)", true],
+              ["AI Report (₹199 each)", true],
             ]}
             cta={currentTier === "solo" ? "Active plan ✓" : "Choose Solo"}
             ctaClass={currentTier === "solo" ? "bg-teal/10 text-teal border border-teal/30" : "bg-ink text-cream"}
@@ -118,9 +154,6 @@ function Pricing() {
           />
         </div>
 
-        <div className="mt-6 inline-block rounded-2xl bg-white px-5 py-3 text-xs text-ink/70 shadow-sm">
-          Make it a keepsake — <b>Framed certificate ₹1,499 shipped</b>
-        </div>
       </div>
       <BottomNav />
     </div>

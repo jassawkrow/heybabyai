@@ -9,18 +9,27 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SwipeRouteImport } from './routes/swipe'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SavedRouteImport } from './routes/saved'
+import { Route as SampleReportRouteImport } from './routes/sample-report'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NamesSlugRouteImport } from './routes/names.$slug'
 import { Route as JoinCodeRouteImport } from './routes/join.$code'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SwipeRoute = SwipeRouteImport.update({
   id: '/swipe',
   path: '/swipe',
@@ -36,6 +45,11 @@ const SavedRoute = SavedRouteImport.update({
   path: '/saved',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SampleReportRoute = SampleReportRouteImport.update({
+  id: '/sample-report',
+  path: '/sample-report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
@@ -44,6 +58,11 @@ const ReportRoute = ReportRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -71,6 +90,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NamesSlugRoute = NamesSlugRouteImport.update({
+  id: '/names/$slug',
+  path: '/names/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JoinCodeRoute = JoinCodeRouteImport.update({
   id: '/join/$code',
   path: '/join/$code',
@@ -83,12 +107,16 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/matches': typeof MatchesRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
+  '/sample-report': typeof SampleReportRoute
   '/saved': typeof SavedRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/swipe': typeof SwipeRoute
+  '/terms': typeof TermsRoute
   '/join/$code': typeof JoinCodeRoute
+  '/names/$slug': typeof NamesSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -96,12 +124,16 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/matches': typeof MatchesRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
+  '/sample-report': typeof SampleReportRoute
   '/saved': typeof SavedRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/swipe': typeof SwipeRoute
+  '/terms': typeof TermsRoute
   '/join/$code': typeof JoinCodeRoute
+  '/names/$slug': typeof NamesSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -110,12 +142,16 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/matches': typeof MatchesRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
+  '/sample-report': typeof SampleReportRoute
   '/saved': typeof SavedRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/swipe': typeof SwipeRoute
+  '/terms': typeof TermsRoute
   '/join/$code': typeof JoinCodeRoute
+  '/names/$slug': typeof NamesSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -125,12 +161,16 @@ export interface FileRouteTypes {
     | '/explore'
     | '/matches'
     | '/pricing'
+    | '/privacy'
     | '/profile'
     | '/report'
+    | '/sample-report'
     | '/saved'
     | '/sitemap.xml'
     | '/swipe'
+    | '/terms'
     | '/join/$code'
+    | '/names/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -138,12 +178,16 @@ export interface FileRouteTypes {
     | '/explore'
     | '/matches'
     | '/pricing'
+    | '/privacy'
     | '/profile'
     | '/report'
+    | '/sample-report'
     | '/saved'
     | '/sitemap.xml'
     | '/swipe'
+    | '/terms'
     | '/join/$code'
+    | '/names/$slug'
   id:
     | '__root__'
     | '/'
@@ -151,12 +195,16 @@ export interface FileRouteTypes {
     | '/explore'
     | '/matches'
     | '/pricing'
+    | '/privacy'
     | '/profile'
     | '/report'
+    | '/sample-report'
     | '/saved'
     | '/sitemap.xml'
     | '/swipe'
+    | '/terms'
     | '/join/$code'
+    | '/names/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -165,16 +213,27 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   MatchesRoute: typeof MatchesRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ReportRoute: typeof ReportRoute
+  SampleReportRoute: typeof SampleReportRoute
   SavedRoute: typeof SavedRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SwipeRoute: typeof SwipeRoute
+  TermsRoute: typeof TermsRoute
   JoinCodeRoute: typeof JoinCodeRoute
+  NamesSlugRoute: typeof NamesSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/swipe': {
       id: '/swipe'
       path: '/swipe'
@@ -196,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SavedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sample-report': {
+      id: '/sample-report'
+      path: '/sample-report'
+      fullPath: '/sample-report'
+      preLoaderRoute: typeof SampleReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/report': {
       id: '/report'
       path: '/report'
@@ -208,6 +274,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -245,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/names/$slug': {
+      id: '/names/$slug'
+      path: '/names/$slug'
+      fullPath: '/names/$slug'
+      preLoaderRoute: typeof NamesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/join/$code': {
       id: '/join/$code'
       path: '/join/$code'
@@ -261,12 +341,16 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   MatchesRoute: MatchesRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ReportRoute: ReportRoute,
+  SampleReportRoute: SampleReportRoute,
   SavedRoute: SavedRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SwipeRoute: SwipeRoute,
+  TermsRoute: TermsRoute,
   JoinCodeRoute: JoinCodeRoute,
+  NamesSlugRoute: NamesSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

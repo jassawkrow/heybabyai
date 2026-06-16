@@ -3,6 +3,7 @@ import { X, Heart, ArrowRight } from "lucide-react";
 import { gradientFor } from "@/lib/gradients";
 import type { Tables } from "@/integrations/supabase/types";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 type N = Tables<"names">;
 
@@ -111,6 +112,44 @@ export function NameSheet({
                   {name.meaning_long}
                 </div>
               )}
+
+              <div>
+                <div className="text-xs font-semibold text-ink/60 mb-2">SHARE</div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => {
+                      const text = `Check out the name ${name.name} on HeyBaby AI! ${name.name} means "${name.meaning_short ?? ""}". Find your perfect baby name at heybabyai.com`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                    }}
+                    className="pill bg-[#25D366] text-white px-4 py-2 text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    💬 WhatsApp
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://heybabyai.com/names/${name.slug}`);
+                      toast.success("Link copied!");
+                    }}
+                    className="pill bg-white border border-black/10 text-ink px-4 py-2 text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    🔗 Copy link
+                  </button>
+                  {navigator.share && (
+                    <button
+                      onClick={() => {
+                        navigator.share({
+                          title: `${name.name} - Baby Name`,
+                          text: `${name.name} means "${name.meaning_short ?? ""}". Find beautiful baby names at HeyBaby AI`,
+                          url: `https://heybabyai.com/names/${name.slug}`,
+                        }).catch(() => {});
+                      }}
+                      className="pill grad-primary text-white px-4 py-2 text-xs font-semibold flex items-center gap-1.5"
+                    >
+                      📤 Share
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="sticky bottom-0 px-6 py-4 bg-cream/95 backdrop-blur border-t border-black/5 flex items-center gap-3">

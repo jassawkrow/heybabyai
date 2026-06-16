@@ -143,6 +143,13 @@
   @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
   @keyframes float-y { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
   .float-y { animation: float-y 4s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-8px)} }
+  .float-1 { animation: float 3s ease-in-out infinite; }
+  .float-2 { animation: float 3.5s ease-in-out infinite 0.5s; }
+  .float-3 { animation: float 4s ease-in-out infinite 1s; }
+  .float-4 { animation: float 3.2s ease-in-out infinite 1.5s; }
+  .float-5 { animation: float 3.8s ease-in-out infinite 0.8s; }
+  .float-6 { animation: float 3.4s ease-in-out infinite 0.3s; }
 }
 
 @media print {

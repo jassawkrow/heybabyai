@@ -1,34 +1,71 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Helmet } from "react-helmet-async";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { Star, Heart, Sparkles, FileText, ArrowRight, Search } from "lucide-react";
 import { motion } from "framer-motion";
-import { gradientFor } from "@/lib/gradients";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+import { sessionGradients } from "@/lib/sessionGradients";
+import { cardHeightFor } from "@/lib/gradients";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "HeyBaby AI — Find a name that feels like home" },
-      { name: "description", content: "Swipe through 2,278 Indian baby names with your partner. Match in real time. Discover the one that feels right." },
+      { title: "HeyBaby AI — Your Baby's Name Starts Here" },
+      { name: "description", content: "Swipe through 8,000+ names from cultures around the world. Match with your partner. Guided by AI." },
     ],
   }),
   component: Landing,
 });
 
-const PREVIEW = [
-  { name: "Aria", origin: "Sanskrit", meaning: "Noble melody", score: 98 },
-  { name: "Rumi", origin: "Persian", meaning: "Beauty, friend, soulful", score: 96 },
-  { name: "Anvi", origin: "Sanskrit", meaning: "Goddess of forests", score: 94 },
-  { name: "Mira", origin: "Sanskrit", meaning: "Devoted, ocean", score: 95 },
-  { name: "Ira", origin: "Sanskrit", meaning: "Earth, peace", score: 92 },
-  { name: "Saanvi", origin: "Sanskrit", meaning: "Goddess Lakshmi", score: 97 },
-  { name: "Kabir", origin: "Arabic", meaning: "Great, mystic poet", score: 93 },
-  { name: "Vihaan", origin: "Sanskrit", meaning: "Dawn, beginning", score: 91 },
-];
+const CARD_HEIGHTS = ["min-h-[180px]", "min-h-[150px]", "min-h-[150px]", "min-h-[180px]", "min-h-[165px]", "min-h-[165px]"];
+const FLOAT_CLASSES = ["float-1", "float-2", "float-3", "float-4", "float-5", "float-6"];
+
+function getFontSize(name: string) {
+  const len = name.length;
+  if (len <= 5) return "text-3xl";
+  if (len <= 7) return "text-2xl";
+  if (len <= 9) return "text-xl";
+  if (len <= 12) return "text-lg";
+  if (len <= 15) return "text-base";
+  return "text-sm";
+}
 
 function Landing() {
+  const [previewNames, setPreviewNames] = useState<Tables<"names">[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("names")
+        .select("id, name, meaning_short, origin, gradient_index, slug, gender, ai_vibe_score, pronunciation, rasi, star")
+        .order("ai_vibe_score", { ascending: false, nullsFirst: false })
+        .limit(100);
+      if (data && data.length > 0) {
+        const shuffled = [...data].sort(() => Math.random() - 0.5);
+        setPreviewNames(shuffled.slice(0, 6));
+      }
+    })();
+  }, []);
+
   return (
     <div className="min-h-screen relative overflow-hidden">
+      <Helmet>
+        <title>HeyBaby AI — Your Baby's Name Starts Here</title>
+        <meta property="og:title" content="HeyBaby AI — Your Baby's Name Starts Here" />
+        <meta property="og:description" content="Swipe through 8,000+ names from cultures around the world. Match with your partner. Guided by AI." />
+        <meta property="og:url" content="https://heybabyai.com" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="HeyBaby AI" />
+        <meta property="og:image" content="https://heybabyai.com/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="HeyBaby AI — Your Baby's Name Starts Here" />
+        <meta name="twitter:description" content="Swipe through 8,000+ names from cultures around the world. Match with your partner. Guided by AI." />
+        <meta name="twitter:image" content="https://heybabyai.com/og-image.png" />
+      </Helmet>
+
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-32 -left-32 w-[420px] h-[420px] rounded-full" style={{ background: "radial-gradient(circle, rgba(29,175,182,0.18), transparent 70%)" }} />
         <div className="absolute -bottom-40 -right-32 w-[520px] h-[520px] rounded-full" style={{ background: "radial-gradient(circle, rgba(239,92,132,0.18), transparent 70%)" }} />
@@ -41,11 +78,10 @@ function Landing() {
           ✦ AI-Powered Baby Name Discovery
         </span>
         <h1 className="mt-6 text-[34px] sm:text-[56px] leading-[1.05] font-extrabold tracking-tight">
-          Find a name that <br className="hidden sm:block" />
-          feels like <span className="text-grad-primary">home.</span>
+          Your Baby's Name <span className="text-grad-primary">Starts Here</span>
         </h1>
         <p className="mt-5 max-w-xl mx-auto text-[15px] sm:text-base text-ink/65">
-          Swipe through 2,278 Indian names with your partner. Match in real time. Discover the one that just feels right.
+          Swipe through 8,000+ names from cultures around the world. Match with your partner. Guided by AI.
         </p>
 
         <div className="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
@@ -61,7 +97,7 @@ function Landing() {
           <div className="glass pill flex items-center gap-3 px-5 py-3.5">
             <Search className="w-4 h-4 text-ink/50" />
             <Link to="/explore" className="flex-1 text-left text-sm text-ink/40">
-              Search 2,278 names… try Aria, Tamil, sacred
+              Search 8,000+ names… try Aria, Tamil, sacred
             </Link>
           </div>
         </div>
@@ -80,10 +116,10 @@ function Landing() {
           <p className="mt-3 text-white/85 max-w-md mx-auto text-sm sm:text-base">
             Get a full AI Identity Report — numerology, Vedic astrology, personality archetype and more
           </p>
-          <Link to="/report" className="mt-6 inline-flex items-center gap-2 pill bg-white text-purple font-semibold px-7 py-3.5 text-sm hover:scale-[1.02] active:scale-[0.97] transition">
+          <Link to="/sample-report" className="mt-6 inline-flex items-center gap-2 pill bg-white text-purple font-semibold px-7 py-3.5 text-sm hover:scale-[1.02] active:scale-[0.97] transition">
             Get AI Identity Report →
           </Link>
-          <div className="mt-3 text-xs text-white/60">Free preview · Full report ₹499</div>
+          <div className="mt-3 text-xs text-white/60">Free preview · Full report ₹199</div>
         </div>
       </section>
 
@@ -104,23 +140,43 @@ function Landing() {
           Send your partner an invite link, swipe at your own pace, and let the algorithm celebrate the moment you both fall for the same name.
         </p>
 
-        <div className="mt-10 columns-2 sm:columns-4 gap-2.5 max-w-3xl mx-auto">
-          {PREVIEW.map((p, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className={`${gradientFor(i)} rounded-2xl p-4 text-white text-left mb-2.5 break-inside-avoid float-y`}
-              style={{ animationDelay: `${i * 0.3}s`, minHeight: 140 + (i % 3) * 30 }}
-            >
-              <div className="flex items-center justify-between text-[10px] font-semibold">
-                <span className="glass-chip pill px-2 py-0.5">{p.origin}</span>
-                <span className="glass-chip pill px-2 py-0.5">✨ {p.score}</span>
-              </div>
-              <div className="mt-6 text-2xl font-extrabold">{p.name}</div>
-              <div className="text-[11px] mt-1 text-white/85">{p.meaning}</div>
-            </motion.div>
+        <div className="mt-10 grid grid-cols-2 gap-2 w-full max-w-sm mx-auto">
+          {previewNames.map((p, i) => (
+            <Link to="/explore" key={p.id}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className={`${sessionGradients[i % sessionGradients.length]} ${CARD_HEIGHTS[i] ?? "min-h-[160px]"} ${FLOAT_CLASSES[i] ?? "float-1"} rounded-2xl p-3 text-white text-left cursor-pointer hover:scale-105 transition-transform duration-200 flex flex-col justify-between overflow-hidden`}
+              >
+                {/* Top: origin + vibe score */}
+                <div className="flex items-center justify-between gap-1 text-[9px] font-semibold">
+                  <span className="glass-chip pill px-2 py-0.5 truncate">{p.origin}</span>
+                  {p.ai_vibe_score != null && (
+                    <span className="glass-chip pill px-2 py-0.5 shrink-0">✦ {p.ai_vibe_score}</span>
+                  )}
+                </div>
+
+                {/* Middle: name + pronunciation */}
+                <div className="my-1">
+                  <div className={`${getFontSize(p.name)} font-extrabold leading-tight`}>{p.name}</div>
+                  {p.pronunciation && (
+                    <div className="text-[10px] mt-0.5 text-white/75 italic">/{p.pronunciation}/</div>
+                  )}
+                  {p.meaning_short && (
+                    <div className="text-[10px] mt-1 text-white/85 line-clamp-2">{p.meaning_short}</div>
+                  )}
+                </div>
+
+                {/* Bottom: rasi + star */}
+                {(p.rasi || p.star) && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {p.rasi && <span className="glass-chip pill px-2 py-0.5 text-[9px]">{p.rasi}</span>}
+                    {p.star && <span className="glass-chip pill px-2 py-0.5 text-[9px]">{p.star}</span>}
+                  </div>
+                )}
+              </motion.div>
+            </Link>
           ))}
         </div>
       </section>

@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Helmet } from "react-helmet-async";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,31 +8,61 @@ import { openRazorpay } from "@/lib/razorpay";
 import { ArrowRight } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
+type RelatedName = {
+  id: string;
+  name: string;
+  slug: string;
+  origin: string;
+  gender: string;
+  meaning_short: string | null;
+  gradient_index: number | null;
+};
+
+type LoaderData = {
+  name: Tables<"names"> | null;
+  relatedNames: RelatedName[];
+};
+
 export const Route = createFileRoute("/names/$slug")({
-  loader: async ({ params: { slug } }) => {
-    const { data } = await supabase
+  loader: async ({ params: { slug } }): Promise<LoaderData> => {
+    const { data: name } = await supabase
       .from("names")
       .select("*")
       .eq("slug", slug.toLowerCase())
       .maybeSingle();
-    return data as Tables<"names"> | null;
+
+    if (!name) return { name: null, relatedNames: [] };
+
+    const letter = name.starting_letter ?? name.name[0].toUpperCase();
+    const { data: related } = await supabase
+      .from("names")
+      .select("id, name, slug, origin, gender, meaning_short, gradient_index")
+      .neq("slug", slug.toLowerCase())
+      .or(`origin.eq.${name.origin},starting_letter.eq.${letter}`)
+      .limit(5);
+
+    return { name, relatedNames: related ?? [] };
   },
-  head: ({ loaderData: name }) => {
+  head: ({ loaderData }) => {
+    const name = loaderData?.name;
     if (!name) return { meta: [{ title: "Name Not Found | HeyBaby AI" }] };
+    const title = `${name.name} Name Meaning, Origin & Pronunciation | ${name.origin} Baby Names | HeyBaby AI`;
+    const desc = `${name.name}${name.pronunciation ? ` (${name.pronunciation})` : ""} is a ${name.origin} ${name.gender} name meaning '${name.meaning_short ?? ""}'. Explore the full cultural history, numerology, Vedic astrology, and personality archetype for ${name.name} on HeyBaby AI.`;
+    const url = `https://www.heybabyai.com/names/${name.slug}`;
     return {
       meta: [
-        { title: `${name.name} Baby Name — Meaning, Numerology & More | HeyBaby AI` },
-        {
-          name: "description",
-          content: `${name.name} means ${name.meaning_short ?? ""}. Origin: ${name.origin}. Numerology: ${name.numerology ?? "—"}. Rasi: ${name.rasi ?? "—"}. Discover more Indian baby names on HeyBaby AI.`,
-        },
-        { property: "og:title", content: `${name.name} — ${name.meaning_short} | HeyBaby AI` },
-        {
-          property: "og:description",
-          content: `${name.name} (${name.origin}) means ${name.meaning_short}. Explore numerology, Vedic astrology, and personality insights on HeyBaby AI.`,
-        },
-        { property: "og:url", content: `https://www.heybabyai.com/names/${name.slug}` },
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: url },
         { property: "og:type", content: "article" },
+        { property: "og:site_name", content: "HeyBaby AI" },
+        { property: "og:image", content: "https://www.heybabyai.com/og-image.png" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: desc },
+        { name: "twitter:image", content: "https://www.heybabyai.com/og-image.png" },
       ],
     };
   },
@@ -39,7 +70,7 @@ export const Route = createFileRoute("/names/$slug")({
 });
 
 function NamePage() {
-  const name = Route.useLoaderData();
+  const { name, relatedNames } = Route.useLoaderData();
   const navigate = useNavigate();
 
   if (!name) {
@@ -58,26 +89,32 @@ function NamePage() {
     );
   }
 
+  const title = `${name.name} Name Meaning, Origin & Pronunciation | ${name.origin} Baby Names | HeyBaby AI`;
+  const desc = `${name.name}${name.pronunciation ? ` (${name.pronunciation})` : ""} is a ${name.origin} ${name.gender} name meaning '${name.meaning_short ?? ""}'. Explore the full cultural history, numerology, Vedic astrology, and personality archetype for ${name.name} on HeyBaby AI.`;
+  const canonicalUrl = `https://www.heybabyai.com/names/${name.slug}`;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: `${name.name} Baby Name Meaning`,
-    description: `${name.name} means ${name.meaning_short}. Origin: ${name.origin}. Numerology number ${name.numerology ?? "—"}.`,
-    url: `https://www.heybabyai.com/names/${name.slug}`,
-    publisher: { "@type": "Organization", name: "HeyBaby AI", url: "https://www.heybabyai.com" },
-    about: { "@type": "Thing", name: name.name, description: name.meaning_long ?? name.meaning_short ?? "" },
+    headline: `${name.name} Name Meaning and Origin`,
+    description: name.meaning_short ?? "",
+    about: {
+      "@type": "Thing",
+      name: name.name,
+      description: `${name.origin} ${name.gender} name meaning ${name.meaning_short ?? ""}`,
+    },
   };
 
   const handleUnlock = () => {
     openRazorpay({
-      amount: 49900,
+      amount: 19900,
       description: `AI Identity Report — ${name.name}`,
       onSuccess: async (r: any) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           await supabase.from("payments").insert({
             user_id: user.id,
-            amount_paise: 49900,
+            amount_paise: 19900,
             tier: "report",
             razorpay_payment_id: r.razorpay_payment_id,
             status: "paid",
@@ -90,12 +127,24 @@ function NamePage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
+      <Helmet>
+        <title>{title}</title>
+        <meta name="description" content={desc} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={desc} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="HeyBaby AI" />
+        <meta property="og:image" content="https://www.heybabyai.com/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={desc} />
+        <meta name="twitter:image" content="https://www.heybabyai.com/og-image.png" />
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      </Helmet>
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <Header />
 
       <div className="max-w-2xl mx-auto px-5 pt-8 pb-32 space-y-5">
 
@@ -129,6 +178,35 @@ function NamePage() {
           </p>
         </Section>
 
+        {/* ── Related Names ── */}
+        {relatedNames.length > 0 && (
+          <section className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="text-[10px] font-extrabold tracking-widest text-ink/50 uppercase mb-3">You Might Also Like</div>
+            <div className="grid grid-cols-1 gap-1">
+              {relatedNames.map((related) => (
+                <Link
+                  key={related.id}
+                  to="/names/$slug"
+                  params={{ slug: related.slug }}
+                  className="flex items-center gap-4 rounded-2xl p-3 hover:bg-black/5 transition"
+                >
+                  <div className={`${gradientFor(related.gradient_index)} w-12 h-12 rounded-2xl flex items-center justify-center text-white font-extrabold text-lg flex-shrink-0`}>
+                    {related.name[0]}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-ink">{related.name}</div>
+                    <div className="text-xs text-ink/60 truncate">{related.origin} · {related.gender}</div>
+                    {related.meaning_short && (
+                      <div className="text-xs text-ink/50 truncate">{related.meaning_short}</div>
+                    )}
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-ink/30 flex-shrink-0" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ── FREE: Swipe CTA ── */}
         <div className="rounded-3xl bg-white border border-black/8 p-6 text-center shadow-sm">
           <p className="text-sm text-ink/65 mb-3">
@@ -161,7 +239,7 @@ function NamePage() {
             <div>⭐ Vedic astrology — Rasi, Nakshatra, element</div>
             <div>🎭 Personality archetype analysis</div>
             <div>✨ Famous bearers and cultural significance</div>
-            <div>📄 Downloadable PDF certificate</div>
+            <div>📄 Downloadable PDF report</div>
           </div>
           <div style={{
             marginTop: "20px",
@@ -170,7 +248,7 @@ function NamePage() {
             padding: "12px",
             textAlign: "center",
           }}>
-            <span style={{ fontSize: "28px", fontWeight: 800 }}>₹499</span>
+            <span style={{ fontSize: "28px", fontWeight: 800 }}>₹199</span>
             <span style={{ opacity: 0.8 }}> one-time · or FREE with Couple's Pass</span>
           </div>
         </div>
@@ -249,7 +327,7 @@ function NamePage() {
                 border: "none",
               }}
             >
-              Unlock Full Report — ₹499
+              Unlock Full Report — ₹199
             </button>
             <p style={{ fontSize: "12px", color: "#8a7a8c", margin: 0 }}>
               One-time payment · Download PDF · No refunds

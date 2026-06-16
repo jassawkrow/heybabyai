@@ -6,6 +6,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Copy, LogOut, Zap } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter, DialogClose,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "Profile — HeyBaby AI" }] }),
@@ -16,6 +20,9 @@ function ProfilePage() {
   const { user, profile, signOut, refreshProfile } = useAuth();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -53,6 +60,28 @@ function ProfilePage() {
       options: { redirectTo: "https://www.heybabyai.com/profile" },
     });
   };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== "DELETE") {
+      toast.error("Type DELETE to confirm");
+      return;
+    }
+    if (!user) return;
+    setDeleting(true);
+    try {
+      await supabase.from("saved_names").delete().eq("user_id", user.id);
+      await supabase.from("partner_rooms").delete().eq("created_by", user.id);
+      await supabase.from("profiles").delete().eq("id", user.id);
+      await supabase.auth.signOut();
+      navigate({ to: "/" });
+      toast.success("Your account has been deleted");
+    } catch {
+      toast.error("Failed to delete account. Please try again.");
+      setDeleting(false);
+    }
+  };
+
+  const tier = profile?.tier ?? "free";
 
   return (
     <div className="min-h-screen">
@@ -103,6 +132,16 @@ function ProfilePage() {
           </div>
         ) : (
           <div className="space-y-4">
+
+            {/* ADD 1 — Home button */}
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1 text-sm text-ink/45 hover:text-ink/70 transition"
+            >
+              ← Home
+            </Link>
+
+            {/* User card */}
             <div className="rounded-3xl bg-white p-6 shadow-sm flex items-center gap-4">
               <div className="w-14 h-14 rounded-full grad-primary flex items-center justify-center text-white font-extrabold text-xl">
                 {(profile?.email ?? user.email ?? "?")[0].toUpperCase()}
@@ -111,9 +150,10 @@ function ProfilePage() {
                 <div className="font-extrabold truncate">{profile?.full_name ?? user.email}</div>
                 <div className="text-xs text-ink/60 truncate">{user.email}</div>
               </div>
-              <span className="pill grad-4 text-white text-[10px] font-bold px-3 py-1 uppercase">{profile?.tier ?? "free"}</span>
+              <span className="pill grad-4 text-white text-[10px] font-bold px-3 py-1 uppercase">{tier}</span>
             </div>
 
+            {/* Partner invite card */}
             <div className="rounded-3xl bg-white p-6 shadow-sm">
               <div className="text-xs font-bold text-ink/50 uppercase mb-3">Partner invite</div>
               {profile?.partner_id ? (
@@ -165,25 +205,88 @@ function ProfilePage() {
               })()}
             </div>
 
+            {/* Stats card */}
             <div className="rounded-3xl bg-white p-6 shadow-sm grid grid-cols-3 text-center">
               <Stat label="Swipes today" value={profile?.daily_swipes ?? 0} />
-              <Stat label="Plan" value={profile?.tier ?? "free"} />
+              <Stat label="Plan" value={tier} />
               <Stat label="Code" value={profile?.room_code?.slice(0, 4) ?? "—"} />
             </div>
 
-            {(profile?.tier ?? "free") === "free" && (
-              <Link to="/pricing" className="block w-full pill grad-primary text-white text-center py-3.5 font-semibold text-sm flex items-center justify-center gap-2">
-                <Zap className="w-4 h-4" /> Upgrade plan
+            {/* ADD 2 — Upgrade button for all tiers */}
+            {tier === "couple" ? (
+              <div className="w-full pill text-center py-3.5 font-semibold text-sm flex items-center justify-center gap-2 bg-ink/5 text-ink/35 cursor-default select-none">
+                You're on the best plan ✦
+              </div>
+            ) : (
+              <Link
+                to="/pricing"
+                className="block w-full pill grad-primary text-white text-center py-3.5 font-semibold text-sm flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                {tier === "solo"
+                  ? "Upgrade to Couple's Pass — ₹799/6mo"
+                  : "Upgrade to Solo Pass — ₹299/mo"}
               </Link>
             )}
 
+            {/* Sign out */}
             <button onClick={signOut} className="w-full pill bg-white border border-black/10 py-3.5 font-semibold text-sm flex items-center justify-center gap-2 text-ink/70">
               <LogOut className="w-4 h-4" /> Sign out
             </button>
+
+            {/* ADD 3 — Danger zone */}
+            <div style={{ borderTop: "1px solid rgba(255,0,0,0.15)", paddingTop: "16px", marginTop: "8px" }}>
+              <button
+                onClick={() => { setDeleteConfirm(""); setDeleteOpen(true); }}
+                className="w-full text-red-400 text-xs py-2 hover:text-red-600 transition"
+              >
+                Delete My Account
+              </button>
+              <p className="text-[10px] text-ink/35 text-center mt-1">
+                This will permanently delete your account, saved names, and all data. This cannot be undone.
+              </p>
+            </div>
           </div>
         )}
       </div>
       <BottomNav />
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="rounded-2xl max-w-sm mx-4">
+          <DialogHeader>
+            <DialogTitle>Delete your account?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete your account, saved names, and all data. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <p className="text-sm">
+              Type <span className="font-mono font-bold text-red-500">DELETE</span> to confirm:
+            </p>
+            <input
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder="DELETE"
+              className="w-full pill bg-cream border border-black/10 px-4 py-3 text-sm outline-none focus:border-red-400 font-mono"
+            />
+          </div>
+          <DialogFooter className="gap-2 flex-row justify-end">
+            <DialogClose asChild>
+              <button className="pill bg-cream border border-black/10 px-5 py-2.5 text-sm font-semibold">
+                Cancel
+              </button>
+            </DialogClose>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirm !== "DELETE" || deleting}
+              className="pill bg-red-500 text-white px-5 py-2.5 text-sm font-semibold disabled:opacity-40 transition"
+            >
+              {deleting ? "Deleting…" : "Delete permanently"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

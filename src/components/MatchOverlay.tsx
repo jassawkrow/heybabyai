@@ -12,13 +12,20 @@ export function MatchOverlay({
 }: { name: Tables<"names"> | null; partnerName?: string; onClose: () => void }) {
   useEffect(() => {
     if (!name) return;
-    const fire = () => confetti({
-      particleCount: 80, spread: 90, origin: { y: 0.4 }, colors: COLORS,
-    });
-    fire();
-    const t1 = setTimeout(fire, 400);
-    const t2 = setTimeout(onClose, 8000);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+
+    confetti({ particleCount: 150, spread: 100, origin: { x: 0.5, y: 0.3 }, colors: COLORS, scalar: 1.2, ticks: 200, gravity: 0.8 });
+
+    const t1 = setTimeout(() => {
+      confetti({ particleCount: 100, angle: 60,  spread: 80, origin: { x: 0, y: 0.6 }, colors: COLORS });
+      confetti({ particleCount: 100, angle: 120, spread: 80, origin: { x: 1, y: 0.6 }, colors: COLORS });
+    }, 400);
+
+    const t2 = setTimeout(() => {
+      confetti({ particleCount: 80, spread: 120, origin: { x: 0.5, y: 0 }, colors: COLORS, ticks: 300 });
+    }, 800);
+
+    const t3 = setTimeout(onClose, 8000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [name, onClose]);
 
   return (
