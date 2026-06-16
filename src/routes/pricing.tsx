@@ -5,6 +5,7 @@ import { Check, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getCurrency, getPricing, fmtPrice, openRazorpay } from "@/lib/razorpay";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({ meta: [{ title: "Pricing — HeyBaby AI" }] }),
@@ -13,36 +14,36 @@ export const Route = createFileRoute("/pricing")({
 
 function Pricing() {
   const { user, profile } = useAuth();
+  const currency = getCurrency();
+  const p = getPricing(currency);
+  const fmt = (n: number) => fmtPrice(n, p);
 
   const handleSolo = () => {
     if (!user) { toast.error("Sign in first"); location.assign("/profile"); return; }
-    new (window as any).Razorpay({
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: 29900,
-      currency: 'INR',
-      name: 'HeyBaby AI',
-      description: 'Solo Pass - 30 days',
-      payment_capture: 1,
-      theme: { color: '#1DAFB6' },
-      handler: async (response: any) => {
+    openRazorpay({
+      amount: p.solo,
+      currency,
+      description: 'Solo Pass – 30 days',
+      email: user.email ?? '',
+      onSuccess: async (response, amountSmallest) => {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) throw new Error('Not logged in');
-          const tierValue = 'solo';
+          const { data: { user: u } } = await supabase.auth.getUser();
+          if (!u) throw new Error('Not logged in');
           const { error } = await supabase
             .from('profiles')
             .update({
-              tier: tierValue,
+              tier: 'solo',
               tier_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
             })
-            .eq('id', user.id);
+            .eq('id', u.id);
           if (error) throw error;
           await supabase.from('payments').insert({
-            user_id: user.id,
+            user_id: u.id,
             razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_order_id: response.razorpay_order_id || null,
-            amount_paise: 29900,
-            tier: tierValue,
+            razorpay_order_id: response.razorpay_order_id ?? null,
+            amount_paise: amountSmallest,
+            currency,
+            tier: 'solo',
             status: 'paid',
           });
           toast.success('You are now on Solo Pass!');
@@ -52,48 +53,45 @@ function Pricing() {
           console.error(err);
         }
       },
-    }).open();
+    });
   };
 
   const handleCouple = () => {
     if (!user) { toast.error("Sign in first"); location.assign("/profile"); return; }
-    new (window as any).Razorpay({
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: 79900,
-      currency: 'INR',
-      name: 'HeyBaby AI',
-      description: "Couple's Pass - 6 months",
-      payment_capture: 1,
-      theme: { color: '#1DAFB6' },
-      handler: async (response: any) => {
+    openRazorpay({
+      amount: p.couple6m,
+      currency,
+      description: "Couple's Pass – 6 months",
+      email: user.email ?? '',
+      onSuccess: async (response, amountSmallest) => {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) throw new Error('Not logged in');
-          const tierValue = 'couple';
+          const { data: { user: u } } = await supabase.auth.getUser();
+          if (!u) throw new Error('Not logged in');
           const { error } = await supabase
             .from('profiles')
             .update({
-              tier: tierValue,
-              tier_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              tier: 'couple',
+              tier_expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
             })
-            .eq('id', user.id);
+            .eq('id', u.id);
           if (error) throw error;
           await supabase.from('payments').insert({
-            user_id: user.id,
+            user_id: u.id,
             razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_order_id: response.razorpay_order_id || null,
-            amount_paise: 79900,
-            tier: tierValue,
+            razorpay_order_id: response.razorpay_order_id ?? null,
+            amount_paise: amountSmallest,
+            currency,
+            tier: 'couple',
             status: 'paid',
           });
-          toast.success("You are now on Couple Pass!");
+          toast.success("You are now on Couple's Pass!");
           window.location.reload();
         } catch (err) {
           toast.error('Payment recorded but upgrade failed. Contact support.');
           console.error(err);
         }
       },
-    }).open();
+    });
   };
 
   const currentTier = profile?.tier ?? "free";
@@ -108,14 +106,14 @@ function Pricing() {
 
         <div className="grid md:grid-cols-3 gap-5 mt-10 text-left">
           <Tier
-            name="Taste Test" tag="FREE" price="₹0" sub="forever"
+            name="Taste Test" tag="FREE" price={`${p.symbol}0`} sub="forever"
             features={[
               ["Get a feel for it.", true],
               ["20 swipes per day", true],
               ["Basic name search", true],
               ["Save up to 5 favorites", true],
               ["Partner match", false],
-              ["AI Report (₹199 each)", false],
+              [`AI Report (${fmt(p.report)} each)`, false],
             ]}
             cta={currentTier === "free" ? "Current plan" : "Free plan"}
             ctaClass="bg-cream border border-black/10 text-ink/70"
@@ -123,14 +121,14 @@ function Pricing() {
           />
 
           <Tier
-            name="Solo Pass" tag="₹299 / $5.99" price="₹299" sub="30 days"
+            name="Solo Pass" tag={fmt(p.solo)} price={fmt(p.solo)} sub="30 days"
             features={[
               ["Swipe to your heart's content — alone.", true],
               ["Unlimited swipes", true],
               ["All filters unlocked", true],
               ["Save unlimited names", true],
               ["Partner match engine", false],
-              ["AI Report (₹199 each)", true],
+              [`AI Report (${fmt(p.report)} each)`, true],
             ]}
             cta={currentTier === "solo" ? "Active plan ✓" : "Choose Solo"}
             ctaClass={currentTier === "solo" ? "bg-teal/10 text-teal border border-teal/30" : "bg-ink text-cream"}
@@ -138,7 +136,7 @@ function Pricing() {
           />
 
           <Tier
-            name="Couple's Pass" tag="MOST LOVED 💕" price="₹799" sub="6 months · 2 users"
+            name="Couple's Pass" tag="MOST LOVED 💕" price={fmt(p.couple6m)} sub="6 months · 2 users"
             featured
             features={[
               ["For both of you, together.", true],
@@ -154,6 +152,9 @@ function Pricing() {
           />
         </div>
 
+        <p className="mt-5 text-xs text-ink/50">
+          Prices shown in {currency} · Secured by Razorpay
+        </p>
       </div>
       <BottomNav />
     </div>

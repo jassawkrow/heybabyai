@@ -9,7 +9,7 @@ import { Search, Lock, Download, Share2, X } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { openRazorpay } from "@/lib/razorpay";
+import { openRazorpay, getCurrency, getPricing, fmtPrice } from "@/lib/razorpay";
 import { ReportTemplate } from "@/components/ReportTemplate";
 import { generateNameReport } from "@/lib/generatePDF";
 import { generateAIContent, type AIContent } from "@/lib/generateAIContent";
@@ -25,6 +25,8 @@ export const Route = createFileRoute("/report")({
 function ReportPage() {
   const { name } = Route.useSearch();
   const { user, profile } = useAuth();
+  const currency = getCurrency();
+  const p = getPricing(currency);
   const [query, setQuery] = useState(name ?? "");
   const [hit, setHit] = useState<Tables<"names"> | null>(null);
   const [unlocked, setUnlocked] = useState(false);
@@ -71,13 +73,15 @@ function ReportPage() {
     }
     if (!hit) return;
     openRazorpay({
-      amount: 19900,
-      description: `AI Identity Report - ${hit.name}`,
+      amount: p.report,
+      currency,
+      description: `AI Identity Report – ${hit.name}`,
       email: user.email ?? "",
-      onSuccess: async (r: any) => {
+      onSuccess: async (r: any, amountSmallest: number) => {
         await supabase.from("payments").insert({
           user_id: user.id,
-          amount_paise: 100,
+          amount_paise: amountSmallest,
+          currency,
           tier: "report",
           razorpay_payment_id: r.razorpay_payment_id,
           status: "paid",
@@ -114,6 +118,7 @@ function ReportPage() {
             unlocked={unlocked}
             isFree={isFree}
             onUnlock={handleUnlock}
+            reportPrice={fmtPrice(p.report, p)}
           />
         )}
 
@@ -134,12 +139,13 @@ function ReportPage() {
 }
 
 function Report({
-  name, unlocked, isFree, onUnlock,
+  name, unlocked, isFree, onUnlock, reportPrice,
 }: {
   name: Tables<"names">;
   unlocked: boolean;
   isFree: boolean;
   onUnlock: () => void;
+  reportPrice: string;
 }) {
   const [photoDataUrl, setPhotoDataUrl] = useState<string | undefined>(undefined);
   const [generating, setGenerating] = useState(false);
@@ -226,7 +232,7 @@ function Report({
               <div className="text-center max-w-xs p-6">
                 <Lock className="w-7 h-7 mx-auto text-purple" />
                 <h3 className="mt-3 text-xl font-extrabold">
-                  {isFree ? "🔒 Unlock the full AI Identity Report" : "Unlock for ₹199"}
+                  {isFree ? "🔒 Unlock the full AI Identity Report" : `Unlock for ${reportPrice}`}
                 </h3>
                 <p className="text-xs text-ink/60 mt-2">
                   {isFree
@@ -234,7 +240,7 @@ function Report({
                     : "One-time purchase · Instant PDF download"}
                 </p>
                 <button onClick={onUnlock} className="mt-4 pill grad-primary text-white font-semibold px-6 py-3 text-sm">
-                  Unlock for ₹199
+                  Unlock for {reportPrice}
                 </button>
                 {isFree && (
                   <p className="text-[10px] text-ink/40 mt-3">

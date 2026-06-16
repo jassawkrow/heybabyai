@@ -4,7 +4,7 @@ import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
 import { supabase } from "@/integrations/supabase/client";
 import { gradientFor } from "@/lib/gradients";
-import { openRazorpay } from "@/lib/razorpay";
+import { openRazorpay, getCurrency, getPricing, fmtPrice } from "@/lib/razorpay";
 import { ArrowRight } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -72,6 +72,8 @@ export const Route = createFileRoute("/names/$slug")({
 function NamePage() {
   const { name, relatedNames } = Route.useLoaderData();
   const navigate = useNavigate();
+  const currency = getCurrency();
+  const p = getPricing(currency);
 
   if (!name) {
     return (
@@ -107,14 +109,16 @@ function NamePage() {
 
   const handleUnlock = () => {
     openRazorpay({
-      amount: 19900,
+      amount: p.report,
+      currency,
       description: `AI Identity Report — ${name.name}`,
-      onSuccess: async (r: any) => {
+      onSuccess: async (r: any, amountSmallest: number) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           await supabase.from("payments").insert({
             user_id: user.id,
-            amount_paise: 19900,
+            amount_paise: amountSmallest,
+            currency,
             tier: "report",
             razorpay_payment_id: r.razorpay_payment_id,
             status: "paid",
@@ -248,7 +252,7 @@ function NamePage() {
             padding: "12px",
             textAlign: "center",
           }}>
-            <span style={{ fontSize: "28px", fontWeight: 800 }}>₹199</span>
+            <span style={{ fontSize: "28px", fontWeight: 800 }}>{fmtPrice(p.report, p)}</span>
             <span style={{ opacity: 0.8 }}> one-time · or FREE with Couple's Pass</span>
           </div>
         </div>
@@ -327,7 +331,7 @@ function NamePage() {
                 border: "none",
               }}
             >
-              Unlock Full Report — ₹199
+              Unlock Full Report — {fmtPrice(p.report, p)}
             </button>
             <p style={{ fontSize: "12px", color: "#8a7a8c", margin: 0 }}>
               One-time payment · Download PDF · No refunds
