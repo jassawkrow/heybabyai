@@ -260,6 +260,125 @@ export type Database = {
           },
         ]
       }
+      pet_names: {
+        Row: {
+          id: string
+          slug: string
+          pet_type: string
+          name: string
+          gender: string
+          origin: string
+          meaning_short: string | null
+          meaning_long: string | null
+          personality: string | null
+          keywords: string | null
+          popularity_score: number | null
+          ai_vibe_score: number | null
+          starting_letter: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          slug: string
+          pet_type: string
+          name: string
+          gender?: string
+          origin: string
+          meaning_short?: string | null
+          meaning_long?: string | null
+          personality?: string | null
+          keywords?: string | null
+          popularity_score?: number | null
+          ai_vibe_score?: number | null
+          starting_letter?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          slug?: string
+          pet_type?: string
+          name?: string
+          gender?: string
+          origin?: string
+          meaning_short?: string | null
+          meaning_long?: string | null
+          personality?: string | null
+          keywords?: string | null
+          popularity_score?: number | null
+          ai_vibe_score?: number | null
+          starting_letter?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
+      pet_swipes: {
+        Row: {
+          id: string
+          user_id: string
+          pet_name_id: string
+          liked: boolean
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          pet_name_id: string
+          liked: boolean
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          pet_name_id?: string
+          liked?: boolean
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pet_swipes_pet_name_id_fkey"
+            columns: ["pet_name_id"]
+            isOneToOne: false
+            referencedRelation: "pet_names"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pet_swipes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pet_matches: {
+        Row: {
+          id: string
+          room_code: string
+          pet_name_id: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          room_code: string
+          pet_name_id: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          room_code?: string
+          pet_name_id?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pet_matches_pet_name_id_fkey"
+            columns: ["pet_name_id"]
+            isOneToOne: false
+            referencedRelation: "pet_names"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

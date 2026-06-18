@@ -13,6 +13,7 @@ export function Header() {
           <Link to="/" activeOptions={{ exact: true }} activeProps={{ className: "text-ink" }}>Home</Link>
           <Link to="/pricing" activeProps={{ className: "text-ink" }}>Pricing</Link>
           <Link to="/report" activeProps={{ className: "text-ink" }}>AI Report</Link>
+          <Link to="/pets/explore" activeProps={{ className: "text-ink" }}>Pet Names 🐾</Link>
         </nav>
         <div className="flex items-center gap-3">
           {user ? (

@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SwipeRouteImport } from './routes/swipe'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as SampleReportRouteImport } from './routes/sample-report'
 import { Route as ReportRouteImport } from './routes/report'
@@ -22,6 +21,9 @@ import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PetsSwipeRouteImport } from './routes/pets.swipe'
+import { Route as PetsExploreRouteImport } from './routes/pets.explore'
+import { Route as PetsSlugRouteImport } from './routes/pets.$slug'
 import { Route as NamesSlugRouteImport } from './routes/names.$slug'
 import { Route as JoinCodeRouteImport } from './routes/join.$code'
 
@@ -33,11 +35,6 @@ const TermsRoute = TermsRouteImport.update({
 const SwipeRoute = SwipeRouteImport.update({
   id: '/swipe',
   path: '/swipe',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SavedRoute = SavedRouteImport.update({
@@ -90,6 +87,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PetsSwipeRoute = PetsSwipeRouteImport.update({
+  id: '/pets/swipe',
+  path: '/pets/swipe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PetsExploreRoute = PetsExploreRouteImport.update({
+  id: '/pets/explore',
+  path: '/pets/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PetsSlugRoute = PetsSlugRouteImport.update({
+  id: '/pets/$slug',
+  path: '/pets/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NamesSlugRoute = NamesSlugRouteImport.update({
   id: '/names/$slug',
   path: '/names/$slug',
@@ -112,11 +124,13 @@ export interface FileRoutesByFullPath {
   '/report': typeof ReportRoute
   '/sample-report': typeof SampleReportRoute
   '/saved': typeof SavedRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/swipe': typeof SwipeRoute
   '/terms': typeof TermsRoute
   '/join/$code': typeof JoinCodeRoute
   '/names/$slug': typeof NamesSlugRoute
+  '/pets/$slug': typeof PetsSlugRoute
+  '/pets/explore': typeof PetsExploreRoute
+  '/pets/swipe': typeof PetsSwipeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -129,11 +143,13 @@ export interface FileRoutesByTo {
   '/report': typeof ReportRoute
   '/sample-report': typeof SampleReportRoute
   '/saved': typeof SavedRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/swipe': typeof SwipeRoute
   '/terms': typeof TermsRoute
   '/join/$code': typeof JoinCodeRoute
   '/names/$slug': typeof NamesSlugRoute
+  '/pets/$slug': typeof PetsSlugRoute
+  '/pets/explore': typeof PetsExploreRoute
+  '/pets/swipe': typeof PetsSwipeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -147,11 +163,13 @@ export interface FileRoutesById {
   '/report': typeof ReportRoute
   '/sample-report': typeof SampleReportRoute
   '/saved': typeof SavedRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/swipe': typeof SwipeRoute
   '/terms': typeof TermsRoute
   '/join/$code': typeof JoinCodeRoute
   '/names/$slug': typeof NamesSlugRoute
+  '/pets/$slug': typeof PetsSlugRoute
+  '/pets/explore': typeof PetsExploreRoute
+  '/pets/swipe': typeof PetsSwipeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -166,11 +184,13 @@ export interface FileRouteTypes {
     | '/report'
     | '/sample-report'
     | '/saved'
-    | '/sitemap.xml'
     | '/swipe'
     | '/terms'
     | '/join/$code'
     | '/names/$slug'
+    | '/pets/$slug'
+    | '/pets/explore'
+    | '/pets/swipe'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -183,11 +203,13 @@ export interface FileRouteTypes {
     | '/report'
     | '/sample-report'
     | '/saved'
-    | '/sitemap.xml'
     | '/swipe'
     | '/terms'
     | '/join/$code'
     | '/names/$slug'
+    | '/pets/$slug'
+    | '/pets/explore'
+    | '/pets/swipe'
   id:
     | '__root__'
     | '/'
@@ -200,11 +222,13 @@ export interface FileRouteTypes {
     | '/report'
     | '/sample-report'
     | '/saved'
-    | '/sitemap.xml'
     | '/swipe'
     | '/terms'
     | '/join/$code'
     | '/names/$slug'
+    | '/pets/$slug'
+    | '/pets/explore'
+    | '/pets/swipe'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -218,11 +242,13 @@ export interface RootRouteChildren {
   ReportRoute: typeof ReportRoute
   SampleReportRoute: typeof SampleReportRoute
   SavedRoute: typeof SavedRoute
-  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SwipeRoute: typeof SwipeRoute
   TermsRoute: typeof TermsRoute
   JoinCodeRoute: typeof JoinCodeRoute
   NamesSlugRoute: typeof NamesSlugRoute
+  PetsSlugRoute: typeof PetsSlugRoute
+  PetsExploreRoute: typeof PetsExploreRoute
+  PetsSwipeRoute: typeof PetsSwipeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -239,13 +265,6 @@ declare module '@tanstack/react-router' {
       path: '/swipe'
       fullPath: '/swipe'
       preLoaderRoute: typeof SwipeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/saved': {
@@ -318,6 +337,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pets/swipe': {
+      id: '/pets/swipe'
+      path: '/pets/swipe'
+      fullPath: '/pets/swipe'
+      preLoaderRoute: typeof PetsSwipeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pets/explore': {
+      id: '/pets/explore'
+      path: '/pets/explore'
+      fullPath: '/pets/explore'
+      preLoaderRoute: typeof PetsExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pets/$slug': {
+      id: '/pets/$slug'
+      path: '/pets/$slug'
+      fullPath: '/pets/$slug'
+      preLoaderRoute: typeof PetsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/names/$slug': {
       id: '/names/$slug'
       path: '/names/$slug'
@@ -346,11 +386,13 @@ const rootRouteChildren: RootRouteChildren = {
   ReportRoute: ReportRoute,
   SampleReportRoute: SampleReportRoute,
   SavedRoute: SavedRoute,
-  SitemapDotxmlRoute: SitemapDotxmlRoute,
   SwipeRoute: SwipeRoute,
   TermsRoute: TermsRoute,
   JoinCodeRoute: JoinCodeRoute,
   NamesSlugRoute: NamesSlugRoute,
+  PetsSlugRoute: PetsSlugRoute,
+  PetsExploreRoute: PetsExploreRoute,
+  PetsSwipeRoute: PetsSwipeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

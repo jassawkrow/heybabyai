@@ -1,12 +1,12 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { LayoutGrid, Heart, Sparkles, Bookmark, User } from "lucide-react";
+import { LayoutGrid, Heart, PawPrint, Bookmark, User } from "lucide-react";
 
 const tabs = [
-  { to: "/explore", label: "Explore", icon: LayoutGrid },
-  { to: "/swipe", label: "Swipe", icon: Heart },
-  { to: "/matches", label: "Matches", icon: Sparkles },
-  { to: "/saved", label: "Saved", icon: Bookmark },
-  { to: "/profile", label: "Profile", icon: User },
+  { to: "/explore",      label: "Explore", icon: LayoutGrid },
+  { to: "/swipe",        label: "Swipe",   icon: Heart      },
+  { to: "/pets/explore", label: "Pets",    icon: PawPrint   },
+  { to: "/saved",        label: "Saved",   icon: Bookmark   },
+  { to: "/profile",      label: "Profile", icon: User       },
 ] as const;
 
 export function BottomNav() {
