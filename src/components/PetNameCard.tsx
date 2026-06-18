@@ -1,15 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import type { Tables } from "@/integrations/supabase/types";
 
-const PET_GRADIENTS: Record<string, string> = {
-  dog:     "linear-gradient(135deg, #F97316, #C2410C)",
-  cat:     "linear-gradient(135deg, #8B5CF6, #6D28D9)",
-  bird:    "linear-gradient(135deg, #EAB308, #16A34A)",
-  fish:    "linear-gradient(135deg, #0EA5E9, #0D9488)",
-  rabbit:  "linear-gradient(135deg, #EC4899, #9333EA)",
-  hamster: "linear-gradient(135deg, #F97316, #FBBF24)",
-  turtle:  "linear-gradient(135deg, #22C55E, #065F46)",
-};
+const PET_CARD_GRADIENTS = [
+  "linear-gradient(135deg, #F97316, #C2410C)",
+  "linear-gradient(135deg, #8B5CF6, #6D28D9)",
+  "linear-gradient(135deg, #EAB308, #16A34A)",
+  "linear-gradient(135deg, #0EA5E9, #0D9488)",
+  "linear-gradient(135deg, #EC4899, #9333EA)",
+  "linear-gradient(135deg, #F97316, #FBBF24)",
+  "linear-gradient(135deg, #22C55E, #065F46)",
+  "linear-gradient(135deg, #1DAFB6, #7928A3)",
+  "linear-gradient(135deg, #EA4A35, #EF5C84)",
+  "linear-gradient(135deg, #F8A51C, #EA4A35)",
+  "linear-gradient(135deg, #7928A3, #1DAFB6)",
+  "linear-gradient(135deg, #EF5C84, #7928A3)",
+];
 
 const PET_EMOJI: Record<string, string> = {
   dog: "🐕", cat: "🐈", bird: "🐦", fish: "🐠",
@@ -37,7 +42,7 @@ interface Props {
 }
 
 export function PetNameCard({ name, idx, onClick }: Props) {
-  const gradient = PET_GRADIENTS[name.pet_type] ?? PET_GRADIENTS.dog;
+  const gradient = PET_CARD_GRADIENTS[idx % PET_CARD_GRADIENTS.length];
   const emoji = PET_EMOJI[name.pet_type] ?? "🐾";
   const height = HEIGHTS[idx % HEIGHTS.length];
 

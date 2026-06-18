@@ -6,12 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { Heart, Share2, ArrowLeft } from "lucide-react";
+import { Heart, Share2, ArrowLeft, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/pets/$slug")({
-  head: ({ params }) => ({
-    meta: [{ title: `${params.slug.split("-")[0]} Pet Name — HeyBaby AI` }],
-  }),
+  head: ({ params }) => {
+    const name = params.slug.replace(/-[a-z]+$/, "").replace(/-/g, " ");
+    return { meta: [{ title: `${name} Pet Name — HeyBaby AI` }] };
+  },
   component: PetNamePage,
 });
 
@@ -33,9 +34,9 @@ const PET_EMOJI: Record<string, string> = {
 function PetNamePage() {
   const { slug } = Route.useParams();
   const { user } = useAuth();
-  const [name, setName] = useState<Tables<"pet_names"> | null>(null);
+  const [name, setName]     = useState<Tables<"pet_names"> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked]   = useState(false);
   const [related, setRelated] = useState<Tables<"pet_names">[]>([]);
 
   useEffect(() => {
@@ -55,7 +56,8 @@ function PetNamePage() {
           .select("*")
           .eq("pet_type", data.pet_type)
           .neq("slug", slug)
-          .order("ai_vibe_score", { ascending: false })
+          .order("ai_vibe_score", { ascending: false, nullsFirst: false })
+          .order("id", { ascending: true })
           .limit(6);
         setRelated((rel ?? []) as Tables<"pet_names">[]);
       }
@@ -74,10 +76,7 @@ function PetNamePage() {
   }, [user, name?.id]);
 
   async function handleLike() {
-    if (!user) {
-      toast.error("Sign in to save names");
-      return;
-    }
+    if (!user) { toast.error("Sign in to save names"); return; }
     if (!name) return;
     const newLiked = !liked;
     setLiked(newLiked);
@@ -89,8 +88,13 @@ function PetNamePage() {
   }
 
   function handleShare() {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success("Link copied!");
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: name?.name ?? "", url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success("Link copied!");
+    }
   }
 
   if (loading) {
@@ -122,34 +126,29 @@ function PetNamePage() {
   }
 
   const gradient = PET_GRADIENTS[name.pet_type] ?? PET_GRADIENTS.dog;
-  const emoji = PET_EMOJI[name.pet_type] ?? "🐾";
+  const emoji    = PET_EMOJI[name.pet_type] ?? "🐾";
 
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="max-w-2xl mx-auto px-5 pt-6 pb-32">
-        <Link to="/pets/explore" className="inline-flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink mb-6 transition">
+      <div className="max-w-2xl mx-auto px-5 pt-8 pb-32 space-y-5">
+
+        <Link to="/pets/explore" className="inline-flex items-center gap-1.5 text-sm text-ink/60 hover:text-ink transition">
           <ArrowLeft className="w-4 h-4" /> All pet names
         </Link>
 
-        {/* Hero card */}
-        <div
-          className="rounded-3xl text-white p-8 text-center mb-6 shadow-xl"
-          style={{ background: gradient }}
-        >
-          <div className="text-4xl mb-2">{emoji}</div>
-          <div className="text-xs font-bold tracking-widest opacity-75 uppercase mb-3">
-            {name.pet_type} name
+        {/* ── Hero ── */}
+        <div className="rounded-3xl text-white p-8 text-center" style={{ background: gradient }}>
+          <div className="text-[10px] font-extrabold tracking-[0.3em] opacity-70">HEYBABY · PET NAMES</div>
+          <h1 className="text-6xl font-extrabold mt-4 tracking-tight">{name.name}</h1>
+          <div className="mt-4 flex flex-wrap gap-2 justify-center">
+            <span className="glass-chip pill px-3 py-1 text-xs">{emoji} {name.pet_type}</span>
+            {name.origin && <span className="glass-chip pill px-3 py-1 text-xs">{name.origin}</span>}
+            {name.gender && <span className="glass-chip pill px-3 py-1 text-xs">{name.gender}</span>}
+            {name.ai_vibe_score != null && (
+              <span className="glass-chip pill px-3 py-1 text-xs">✦ {name.ai_vibe_score}</span>
+            )}
           </div>
-          <h1 className="text-6xl font-extrabold leading-tight">{name.name}</h1>
-          {name.origin && (
-            <div className="mt-3 text-white/75 text-sm">{name.origin} origin</div>
-          )}
-          {name.ai_vibe_score != null && (
-            <div className="mt-2 inline-block glass-chip pill px-3 py-1 text-sm">
-              ✦ {name.ai_vibe_score} vibe score
-            </div>
-          )}
           <div className="mt-5 flex gap-3 justify-center">
             <button
               onClick={handleLike}
@@ -169,95 +168,111 @@ function PetNamePage() {
           </div>
         </div>
 
-        {/* Detail sections */}
-        <div className="space-y-4">
-          {name.meaning_short && (
-            <section className="rounded-3xl bg-white p-6">
-              <div className="text-[10px] font-extrabold tracking-widest text-ink/50 uppercase">The Name</div>
-              <p className="mt-3 text-lg font-semibold">{name.meaning_short}</p>
-              {name.meaning_long && (
-                <p className="mt-2 text-ink/70 leading-relaxed text-sm">{name.meaning_long}</p>
-              )}
-            </section>
-          )}
+        {/* ── Meaning ── */}
+        {name.meaning_short && (
+          <Section title="Meaning">
+            <p className="text-lg font-semibold">{name.meaning_short}</p>
+            {name.meaning_long && (
+              <p className="mt-2 text-ink/70 leading-relaxed text-sm">{name.meaning_long}</p>
+            )}
+          </Section>
+        )}
 
-          {name.personality && (
-            <section className="rounded-3xl bg-white p-6">
-              <div className="text-[10px] font-extrabold tracking-widest text-ink/50 uppercase">Personality</div>
-              <p className="mt-3 text-base font-semibold capitalize">{name.personality}</p>
-            </section>
-          )}
+        {/* ── Origin & Culture ── */}
+        {name.origin && (
+          <Section title="Origin & Culture">
+            <p className="text-ink/75">
+              <strong>{name.name}</strong> is a {name.gender ? <><strong>{name.gender}</strong> </> : ""}
+              {name.pet_type} name of <strong>{name.origin}</strong> origin.
+              {name.starting_letter && ` It begins with the letter ${name.starting_letter}.`}
+            </p>
+          </Section>
+        )}
 
-          {name.keywords && (
-            <section className="rounded-3xl bg-white p-6">
-              <div className="text-[10px] font-extrabold tracking-widest text-ink/50 uppercase">Vibes</div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {name.keywords.split(",").map((k, i) => (
-                  <span
-                    key={i}
-                    className="pill px-3 py-1 text-xs font-semibold text-white"
-                    style={{ background: gradient }}
-                  >
-                    {k.trim()}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
+        {/* ── Personality ── */}
+        {name.personality && (
+          <Section title="Personality">
+            <p className="text-base font-semibold capitalize">{name.personality}</p>
+          </Section>
+        )}
 
-          <section className="rounded-3xl bg-white p-6">
-            <div className="text-[10px] font-extrabold tracking-widest text-ink/50 uppercase">Details</div>
-            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-2xl bg-cream p-3">
-                <div className="text-[10px] font-bold text-ink/50 uppercase">Type</div>
-                <div className="font-semibold mt-0.5 capitalize">{name.pet_type}</div>
-              </div>
-              <div className="rounded-2xl bg-cream p-3">
-                <div className="text-[10px] font-bold text-ink/50 uppercase">Origin</div>
-                <div className="font-semibold mt-0.5">{name.origin}</div>
-              </div>
-              {name.gender && (
-                <div className="rounded-2xl bg-cream p-3">
-                  <div className="text-[10px] font-bold text-ink/50 uppercase">Gender</div>
-                  <div className="font-semibold mt-0.5 capitalize">{name.gender}</div>
-                </div>
-              )}
-              {name.starting_letter && (
-                <div className="rounded-2xl bg-cream p-3">
-                  <div className="text-[10px] font-bold text-ink/50 uppercase">Starts with</div>
-                  <div className="font-semibold mt-0.5">{name.starting_letter}</div>
-                </div>
-              )}
+        {/* ── Vibes / Keywords ── */}
+        {name.keywords && (
+          <Section title="Vibes">
+            <div className="flex flex-wrap gap-2">
+              {name.keywords.split(",").map((k, i) => (
+                <span
+                  key={i}
+                  className="pill px-3 py-1 text-xs font-semibold text-white"
+                  style={{ background: gradient }}
+                >
+                  {k.trim()}
+                </span>
+              ))}
             </div>
-          </section>
+          </Section>
+        )}
+
+        {/* ── Swipe CTA ── */}
+        <div className="rounded-3xl bg-white border border-black/8 p-6 text-center shadow-sm">
+          <p className="text-sm text-ink/65 mb-3">
+            Find names you both love — swipe together with your partner.
+          </p>
+          <Link
+            to="/pets/swipe"
+            className="inline-flex items-center gap-2 pill grad-primary text-white font-semibold px-6 py-3 text-sm hover:scale-[1.02] transition"
+          >
+            Swipe pet names free <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
-        {/* Related names */}
+        {/* ── Related names ── */}
         {related.length > 0 && (
-          <section className="mt-8">
-            <h2 className="text-xl font-extrabold mb-4">
+          <section className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="text-[10px] font-extrabold tracking-widest text-ink/50 uppercase mb-3">
               More {emoji} {name.pet_type} names
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            </div>
+            <div className="grid grid-cols-1 gap-1">
               {related.map((r) => (
                 <Link
                   key={r.id}
                   to="/pets/$slug"
                   params={{ slug: r.slug }}
-                  className="rounded-2xl text-white p-4 font-bold text-lg hover:scale-[1.03] transition-transform"
-                  style={{ background: gradient }}
+                  className="flex items-center gap-4 rounded-2xl p-3 hover:bg-black/5 transition"
                 >
-                  {r.name}
-                  {r.meaning_short && (
-                    <div className="text-white/70 text-xs font-normal mt-0.5 line-clamp-1">{r.meaning_short}</div>
-                  )}
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
+                    style={{ background: gradient }}
+                  >
+                    {PET_EMOJI[r.pet_type] ?? "🐾"}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-ink">{r.name}</div>
+                    <div className="text-xs text-ink/60 truncate">
+                      {r.origin} · {r.pet_type}
+                    </div>
+                    {r.meaning_short && (
+                      <div className="text-xs text-ink/50 truncate">{r.meaning_short}</div>
+                    )}
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-ink/30 flex-shrink-0" />
                 </Link>
               ))}
             </div>
           </section>
         )}
+
       </div>
       <BottomNav />
     </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-3xl bg-white p-6 shadow-sm">
+      <div className="text-[10px] font-extrabold tracking-widest text-ink/50 uppercase mb-3">{title}</div>
+      {children}
+    </section>
   );
 }

@@ -152,6 +152,7 @@ function Explore() {
       .from("pet_names")
       .select("*")
       .order("ai_vibe_score", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: true })
       .range(off, off + PAGE - 1);
     if (type !== "All") qb = qb.eq("pet_type", type);
     if (q.trim())
