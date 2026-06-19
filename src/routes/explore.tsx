@@ -143,30 +143,46 @@ function Explore() {
   const [petQuery, setPetQuery]     = useState("");
   const [petType, setPetType]       = useState("All");
   const petBottomRef                = useRef<HTMLDivElement>(null);
+  const petFetchingRef              = useRef(false);
 
   const fetchPetNames = useCallback(async (
     off: number, type: string, q: string, replace: boolean
   ) => {
+    if (petFetchingRef.current) return;
+    petFetchingRef.current = true;
     setPetLoading(true);
-    let qb = supabase
-      .from("pet_names")
-      .select("*")
-      .order("ai_vibe_score", { ascending: false, nullsFirst: false })
-      .order("id", { ascending: true })
-      .range(off, off + PAGE - 1);
-    if (type !== "All") qb = qb.eq("pet_type", type);
-    if (q.trim())
-      qb = qb.or(`name.ilike.%${q.trim()}%,meaning_short.ilike.%${q.trim()}%,keywords.ilike.%${q.trim()}%`);
-    const { data } = await qb;
-    const rows = (data ?? []) as Tables<"pet_names">[];
-    setPetNames((prev) => replace ? rows : [...prev, ...rows]);
-    setPetHasMore(rows.length === PAGE);
-    setPetOffset(off + rows.length);
-    setPetLoading(false);
+    try {
+      let qb = supabase
+        .from("pet_names")
+        .select("*")
+        .order("ai_vibe_score", { ascending: false, nullsFirst: false })
+        .order("id", { ascending: true })
+        .range(off, off + PAGE - 1);
+      if (type !== "All") qb = qb.eq("pet_type", type);
+      if (q.trim())
+        qb = qb.or(`name.ilike.%${q.trim()}%,meaning_short.ilike.%${q.trim()}%,keywords.ilike.%${q.trim()}%`);
+      const { data } = await qb;
+      const rows = (data ?? []) as Tables<"pet_names">[];
+      setPetNames((prev) => {
+        const combined = replace ? rows : [...prev, ...rows];
+        const seen = new Set<string>();
+        return combined.filter((n) => {
+          if (seen.has(n.id)) return false;
+          seen.add(n.id);
+          return true;
+        });
+      });
+      setPetHasMore(rows.length === PAGE);
+      setPetOffset(off + rows.length);
+    } finally {
+      setPetLoading(false);
+      petFetchingRef.current = false;
+    }
   }, []);
 
   useEffect(() => {
     if (mode !== "pets") return;
+    petFetchingRef.current = false;
     setPetOffset(0);
     setPetHasMore(true);
     fetchPetNames(0, petType, petQuery, true);

@@ -54,6 +54,8 @@ function PetExplorePage() {
   const [query, setQuery]     = useState(qParam ?? "");
   const [petType, setPetType] = useState(typeParam ?? "All");
   const bottomRef             = useRef<HTMLDivElement>(null);
+  const fetchingRef           = useRef(false);
+  const [isClassics, setIsClassics] = useState(false);
 
   const [filters, setFilters]         = useState<PetFilterState>(defaultFilters);
   const [filterOpen, setFilterOpen]   = useState(false);
@@ -71,51 +73,66 @@ function PetExplorePage() {
   }, [filterOpen]);
 
   const fetchNames = useCallback(async (
-    off: number, type: string, q: string, f: PetFilterState, replace: boolean
+    off: number, type: string, q: string, f: PetFilterState, classics: boolean, replace: boolean
   ) => {
+    if (fetchingRef.current) return;
+    fetchingRef.current = true;
     setLoading(true);
-    let qb = supabase.from("pet_names").select("*");
+    try {
+      let qb = supabase.from("pet_names").select("*");
 
-    if (f.sort === "alpha") {
-      qb = qb.order("name", { ascending: true });
-    } else {
-      // Secondary sort by id ensures stable pagination when ai_vibe_score ties
-      qb = qb
-        .order("ai_vibe_score", { ascending: f.sort === "asc", nullsFirst: false })
-        .order("id", { ascending: true });
+      if (f.sort === "alpha") {
+        qb = qb.order("name", { ascending: true });
+      } else {
+        qb = qb
+          .order("ai_vibe_score", { ascending: f.sort === "asc", nullsFirst: false })
+          .order("id", { ascending: true });
+      }
+
+      qb = qb.range(off, off + PAGE - 1);
+
+      if (type !== "All") qb = qb.eq("pet_type", type);
+      if (classics) qb = qb.not("name", "like", "% %");
+      if (q.trim()) qb = qb.or(`name.ilike.%${q.trim()}%,meaning_short.ilike.%${q.trim()}%,keywords.ilike.%${q.trim()}%`);
+      if (f.origin.length > 0) qb = qb.in("origin", f.origin);
+      if (f.letter) qb = qb.eq("starting_letter", f.letter);
+
+      const { data } = await qb;
+      const rows = (data ?? []) as Tables<"pet_names">[];
+      setItems((prev) => {
+        const combined = replace ? rows : [...prev, ...rows];
+        const seen = new Set<string>();
+        return combined.filter((n) => {
+          if (seen.has(n.id)) return false;
+          seen.add(n.id);
+          return true;
+        });
+      });
+      setHasMore(rows.length === PAGE);
+      setOffset(off + rows.length);
+    } finally {
+      setLoading(false);
+      fetchingRef.current = false;
     }
-
-    qb = qb.range(off, off + PAGE - 1);
-
-    if (type !== "All") qb = qb.eq("pet_type", type);
-    if (q.trim()) qb = qb.or(`name.ilike.%${q.trim()}%,meaning_short.ilike.%${q.trim()}%,keywords.ilike.%${q.trim()}%`);
-    if (f.origin.length > 0) qb = qb.in("origin", f.origin);
-    if (f.letter) qb = qb.eq("starting_letter", f.letter);
-
-    const { data } = await qb;
-    const rows = (data ?? []) as Tables<"pet_names">[];
-    setItems((prev) => replace ? rows : [...prev, ...rows]);
-    setHasMore(rows.length === PAGE);
-    setOffset(off + rows.length);
-    setLoading(false);
   }, []);
 
   useEffect(() => {
+    fetchingRef.current = false;
     setOffset(0);
     setHasMore(true);
-    fetchNames(0, petType, query, filters, true);
-  }, [petType, query, filters, fetchNames]);
+    fetchNames(0, petType, query, filters, isClassics, true);
+  }, [petType, query, filters, isClassics, fetchNames]);
 
   useEffect(() => {
     if (!bottomRef.current) return;
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting && hasMore && !loading) {
-        fetchNames(offset, petType, query, filters, false);
+        fetchNames(offset, petType, query, filters, isClassics, false);
       }
     }, { threshold: 0.1 });
     obs.observe(bottomRef.current);
     return () => obs.disconnect();
-  }, [hasMore, loading, offset, petType, query, filters, fetchNames]);
+  }, [hasMore, loading, offset, petType, query, filters, isClassics, fetchNames]);
 
   const changeType = (t: string) => {
     setPetType(t);
@@ -172,9 +189,28 @@ function PetExplorePage() {
           )}
         </div>
 
-        {/* Pet type pills + Filters button */}
+        {/* Pet type pills + Classics + Filters button */}
         <div className="flex items-center gap-2 flex-wrap mb-6">
-          {PET_TYPES.map((t) => (
+          {/* All */}
+          <button
+            onClick={() => changeType("All")}
+            className={`pill px-3 py-1.5 text-xs font-semibold transition ${
+              petType === "All" && !isClassics ? "grad-primary text-white" : "bg-white/70 text-ink/70"
+            }`}
+          >
+            All pets
+          </button>
+          {/* Classics — single-word names only */}
+          <button
+            onClick={() => setIsClassics((c) => !c)}
+            className={`pill px-3 py-1.5 text-xs font-semibold transition ${
+              isClassics ? "grad-primary text-white" : "bg-white/70 text-ink/70"
+            }`}
+          >
+            ✦ Classics
+          </button>
+          {/* Species */}
+          {PET_TYPES.filter((t) => t !== "All").map((t) => (
             <button
               key={t}
               onClick={() => changeType(t)}
@@ -182,7 +218,7 @@ function PetExplorePage() {
                 petType === t ? "grad-primary text-white" : "bg-white/70 text-ink/70"
               }`}
             >
-              {t === "All" ? "All pets" : `${PET_EMOJI[t]} ${t.charAt(0).toUpperCase() + t.slice(1)}s`}
+              {`${PET_EMOJI[t]} ${t.charAt(0).toUpperCase() + t.slice(1)}s`}
             </button>
           ))}
 
