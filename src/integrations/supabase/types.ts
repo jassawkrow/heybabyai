@@ -275,6 +275,7 @@ export type Database = {
           popularity_score: number | null
           ai_vibe_score: number | null
           starting_letter: string | null
+          pronunciation: string | null
           created_at: string | null
         }
         Insert: {
@@ -291,6 +292,7 @@ export type Database = {
           popularity_score?: number | null
           ai_vibe_score?: number | null
           starting_letter?: string | null
+          pronunciation?: string | null
           created_at?: string | null
         }
         Update: {
@@ -307,6 +309,7 @@ export type Database = {
           popularity_score?: number | null
           ai_vibe_score?: number | null
           starting_letter?: string | null
+          pronunciation?: string | null
           created_at?: string | null
         }
         Relationships: []

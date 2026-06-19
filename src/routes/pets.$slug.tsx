@@ -1,20 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Helmet } from "react-helmet-async";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { useAuth } from "@/hooks/use-auth";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Heart, Share2, ArrowLeft, ArrowRight } from "lucide-react";
 
-export const Route = createFileRoute("/pets/$slug")({
-  head: ({ params }) => {
-    const name = params.slug.replace(/-[a-z]+$/, "").replace(/-/g, " ");
-    return { meta: [{ title: `${name} Pet Name — HeyBaby AI` }] };
-  },
-  component: PetNamePage,
-});
+type LoaderData = {
+  name: Tables<"pet_names"> | null;
+  related: Tables<"pet_names">[];
+};
 
 const PET_GRADIENTS: Record<string, string> = {
   dog:     "linear-gradient(135deg, #F97316, #C2410C)",
@@ -31,38 +29,58 @@ const PET_EMOJI: Record<string, string> = {
   rabbit: "🐇", hamster: "🐹", turtle: "🐢",
 };
 
+export const Route = createFileRoute("/pets/$slug")({
+  loader: async ({ params: { slug } }): Promise<LoaderData> => {
+    const { data: name } = await supabase
+      .from("pet_names")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (!name) return { name: null, related: [] };
+
+    const { data: related } = await supabase
+      .from("pet_names")
+      .select("*")
+      .eq("pet_type", name.pet_type)
+      .neq("slug", slug)
+      .order("ai_vibe_score", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: true })
+      .limit(6);
+
+    return { name, related: (related ?? []) as Tables<"pet_names">[] };
+  },
+  head: ({ loaderData }) => {
+    const name = loaderData?.name;
+    if (!name) return { meta: [{ title: "Pet Name Not Found | HeyBaby AI" }] };
+    const petType = name.pet_type.charAt(0).toUpperCase() + name.pet_type.slice(1);
+    const title = `${name.name} — ${petType} Name Meaning & Pronunciation | HeyBaby AI`;
+    const desc = `${name.name}${name.pronunciation ? ` (/${name.pronunciation}/)` : ""} is a ${name.pet_type} name meaning "${name.meaning_short ?? ""}". Find perfect pet names on HeyBaby AI.`;
+    const url = `https://www.heybabyai.com/pets/${name.slug}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "article" },
+        { property: "og:site_name", content: "HeyBaby AI" },
+        { property: "og:image", content: "https://www.heybabyai.com/og-image.png" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: desc },
+        { name: "twitter:image", content: "https://www.heybabyai.com/og-image.png" },
+      ],
+    };
+  },
+  component: PetNamePage,
+});
+
 function PetNamePage() {
-  const { slug } = Route.useParams();
+  const { name, related } = Route.useLoaderData();
   const { user } = useAuth();
-  const [name, setName]     = useState<Tables<"pet_names"> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [liked, setLiked]   = useState(false);
-  const [related, setRelated] = useState<Tables<"pet_names">[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from("pet_names")
-        .select("*")
-        .eq("slug", slug)
-        .maybeSingle();
-      setName(data as Tables<"pet_names"> | null);
-      setLoading(false);
-
-      if (data) {
-        const { data: rel } = await supabase
-          .from("pet_names")
-          .select("*")
-          .eq("pet_type", data.pet_type)
-          .neq("slug", slug)
-          .order("ai_vibe_score", { ascending: false, nullsFirst: false })
-          .order("id", { ascending: true })
-          .limit(6);
-        setRelated((rel ?? []) as Tables<"pet_names">[]);
-      }
-    })();
-  }, [slug]);
+  const [liked, setLiked] = useState(false);
 
   useEffect(() => {
     if (!user || !name) return;
@@ -74,40 +92,6 @@ function PetNamePage() {
       .maybeSingle()
       .then(({ data }) => { if (data) setLiked(data.liked); });
   }, [user, name?.id]);
-
-  async function handleLike() {
-    if (!user) { toast.error("Sign in to save names"); return; }
-    if (!name) return;
-    const newLiked = !liked;
-    setLiked(newLiked);
-    await supabase.from("pet_swipes").upsert(
-      { user_id: user.id, pet_name_id: name.id, liked: newLiked },
-      { onConflict: "user_id,pet_name_id" }
-    );
-    toast.success(newLiked ? `Saved ${name.name}!` : "Removed from saved");
-  }
-
-  function handleShare() {
-    const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({ title: name?.name ?? "", url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url);
-      toast.success("Link copied!");
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen">
-        <Header />
-        <div className="flex items-center justify-center py-32">
-          <div className="w-8 h-8 border-2 border-ink/20 border-t-ink/60 rounded-full animate-spin" />
-        </div>
-        <BottomNav />
-      </div>
-    );
-  }
 
   if (!name) {
     return (
@@ -127,9 +111,63 @@ function PetNamePage() {
 
   const gradient = PET_GRADIENTS[name.pet_type] ?? PET_GRADIENTS.dog;
   const emoji    = PET_EMOJI[name.pet_type] ?? "🐾";
+  const petType  = name.pet_type.charAt(0).toUpperCase() + name.pet_type.slice(1);
+  const title    = `${name.name} — ${petType} Name Meaning & Pronunciation | HeyBaby AI`;
+  const desc     = `${name.name}${name.pronunciation ? ` (/${name.pronunciation}/)` : ""} is a ${name.pet_type} name meaning "${name.meaning_short ?? ""}". Find perfect pet names on HeyBaby AI.`;
+  const canonicalUrl = `https://www.heybabyai.com/pets/${name.slug}`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: `${name.name} ${petType} Name Meaning and Origin`,
+    description: name.meaning_short ?? "",
+    about: {
+      "@type": "Thing",
+      name: name.name,
+      description: `${name.pet_type} name meaning ${name.meaning_short ?? ""}`,
+    },
+  };
+
+  const handleLike = async () => {
+    if (!user) { toast.error("Sign in to save names"); return; }
+    const newLiked = !liked;
+    setLiked(newLiked);
+    await supabase.from("pet_swipes").upsert(
+      { user_id: user.id, pet_name_id: name.id, liked: newLiked },
+      { onConflict: "user_id,pet_name_id" }
+    );
+    toast.success(newLiked ? `Saved ${name.name}!` : "Removed from saved");
+  };
+
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: name.name, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success("Link copied!");
+    }
+  };
 
   return (
     <div className="min-h-screen">
+      <Helmet>
+        <title>{title}</title>
+        <meta name="description" content={desc} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={desc} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="article" />
+        <meta property="og:site_name" content="HeyBaby AI" />
+        <meta property="og:image" content="https://www.heybabyai.com/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={desc} />
+        <meta name="twitter:image" content="https://www.heybabyai.com/og-image.png" />
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      </Helmet>
+
       <Header />
       <div className="max-w-2xl mx-auto px-5 pt-8 pb-32 space-y-5">
 
@@ -141,6 +179,9 @@ function PetNamePage() {
         <div className="rounded-3xl text-white p-8 text-center" style={{ background: gradient }}>
           <div className="text-[10px] font-extrabold tracking-[0.3em] opacity-70">HEYBABY · PET NAMES</div>
           <h1 className="text-6xl font-extrabold mt-4 tracking-tight">{name.name}</h1>
+          {name.pronunciation && (
+            <div className="italic mt-2 text-white/90 text-sm">/{name.pronunciation}/</div>
+          )}
           <div className="mt-4 flex flex-wrap gap-2 justify-center">
             <span className="glass-chip pill px-3 py-1 text-xs">{emoji} {name.pet_type}</span>
             {name.origin && <span className="glass-chip pill px-3 py-1 text-xs">{name.origin}</span>}

@@ -46,6 +46,9 @@ export function PetNameCard({ name, idx, onClick }: Props) {
 
       <div className="my-1">
         <div className={`${fontSize(name.name)} font-extrabold leading-tight`}>{name.name}</div>
+        {name.pronunciation && (
+          <div className="italic text-[10px] mt-0.5 text-white/85">/{name.pronunciation}/</div>
+        )}
         {name.meaning_short && (
           <div className="text-[10px] mt-1 text-white/85 line-clamp-2">{name.meaning_short}</div>
         )}
