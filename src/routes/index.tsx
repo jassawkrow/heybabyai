@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { sessionGradients } from "@/lib/sessionGradients";
 import { cardHeightFor } from "@/lib/gradients";
+import { PetNameCard } from "@/components/PetNameCard";
 import { z } from "zod";
 
 export const Route = createFileRoute("/")({
@@ -25,19 +26,6 @@ export const Route = createFileRoute("/")({
 const CARD_HEIGHTS = ["min-h-[180px]", "min-h-[150px]", "min-h-[150px]", "min-h-[180px]", "min-h-[165px]", "min-h-[165px]"];
 const FLOAT_CLASSES = ["float-1", "float-2", "float-3", "float-4", "float-5", "float-6"];
 
-const PET_GRADIENTS: Record<string, string> = {
-  dog:     "linear-gradient(135deg, #F97316, #C2410C)",
-  cat:     "linear-gradient(135deg, #8B5CF6, #6D28D9)",
-  bird:    "linear-gradient(135deg, #EAB308, #16A34A)",
-  fish:    "linear-gradient(135deg, #0EA5E9, #0D9488)",
-  rabbit:  "linear-gradient(135deg, #EC4899, #9333EA)",
-  hamster: "linear-gradient(135deg, #F97316, #FBBF24)",
-  turtle:  "linear-gradient(135deg, #22C55E, #065F46)",
-};
-const PET_EMOJI: Record<string, string> = {
-  dog: "🐕", cat: "🐈", bird: "🐦", fish: "🐠",
-  rabbit: "🐇", hamster: "🐹", turtle: "🐢",
-};
 
 function getFontSize(name: string) {
   const len = name.length;
@@ -264,33 +252,15 @@ function Landing() {
                 </Link>
               ))
             : petPreviewNames.map((p, i) => (
-                <Link to="/pets/$slug" params={{ slug: p.slug }} key={p.id}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className={`${CARD_HEIGHTS[i] ?? "min-h-[160px]"} ${FLOAT_CLASSES[i] ?? "float-1"} rounded-2xl p-3 text-white text-left cursor-pointer hover:scale-105 transition-transform duration-200 flex flex-col justify-between overflow-hidden`}
-                    style={{ background: PET_GRADIENTS[p.pet_type] ?? PET_GRADIENTS.dog }}
-                  >
-                    <div className="flex items-center justify-between gap-1 text-[9px] font-semibold">
-                      <span className="glass-chip pill px-2 py-0.5 truncate">{PET_EMOJI[p.pet_type] ?? "🐾"} {p.pet_type}</span>
-                      {p.ai_vibe_score != null && (
-                        <span className="glass-chip pill px-2 py-0.5 shrink-0">✦ {p.ai_vibe_score}</span>
-                      )}
-                    </div>
-                    <div className="my-1">
-                      <div className={`${getFontSize(p.name)} font-extrabold leading-tight`}>{p.name}</div>
-                      {p.meaning_short && (
-                        <div className="text-[10px] mt-1 text-white/85 line-clamp-2">{p.meaning_short}</div>
-                      )}
-                    </div>
-                    {p.origin && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        <span className="glass-chip pill px-2 py-0.5 text-[9px]">{p.origin}</span>
-                      </div>
-                    )}
-                  </motion.div>
-                </Link>
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className={FLOAT_CLASSES[i] ?? "float-1"}
+                >
+                  <PetNameCard name={p} idx={i} />
+                </motion.div>
               ))}
         </div>
       </section>
