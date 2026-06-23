@@ -1,10 +1,11 @@
 /**
  * Build-time sitemap generator.
- * Produces 5 files in public/:
+ * Produces 6 files in public/:
  *   sitemap.xml          – sitemap index (points to child files)
  *   sitemap-static.xml   – static/marketing pages
  *   sitemap-names-1.xml  – name pages 1-50,000
- *   sitemap-names-2.xml  – name pages 50,001-end
+ *   sitemap-names-2.xml  – name pages 50,001-100,000
+ *   sitemap-names-3.xml  – name pages 100,001-end
  *   sitemap-pets.xml     – pet name pages
  */
 
@@ -17,6 +18,7 @@ const SUPABASE_KEY =
 const BASE_URL = "https://www.heybabyai.com";
 const TODAY = new Date().toISOString().split("T")[0];
 const SPLIT = 50_000;
+const SPLIT2 = 100_000;
 
 // ── Fetch all slugs ─────────────────────────────────────────────────────────
 async function fetchAllSlugs() {
@@ -47,13 +49,16 @@ async function fetchAllPetSlugs() {
       `${SUPABASE_URL}/rest/v1/pet_names?select=slug&order=created_at.asc,id.asc&limit=${pageSize}&offset=${offset}`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
-    if (!res.ok) break;
+    if (!res.ok) {
+      throw new Error(`pet_names fetch failed at offset ${offset}: ${res.status} ${res.statusText}`);
+    }
     const batch = await res.json();
     if (!Array.isArray(batch) || batch.length === 0) break;
     slugs.push(...batch.map((r) => r.slug));
     if (batch.length < pageSize) break;
     offset += pageSize;
   }
+  if (slugs.length === 0) throw new Error("pet_names returned 0 slugs — aborting sitemap build");
   return slugs;
 }
 
@@ -86,7 +91,8 @@ console.log(`Total baby name slugs: ${slugs.length.toLocaleString()}`);
 console.log(`Total pet name slugs: ${petSlugs.length.toLocaleString()}`);
 
 const part1 = slugs.slice(0, SPLIT);
-const part2 = slugs.slice(SPLIT);
+const part2 = slugs.slice(SPLIT, SPLIT2);
+const part3 = slugs.slice(SPLIT2);
 
 // sitemap-names-1.xml
 writeFileSync("public/sitemap-names-1.xml", urlsetWrap(part1.map(nameEntry)), "utf-8");
@@ -95,6 +101,12 @@ console.log(`sitemap-names-1.xml: ${part1.length.toLocaleString()} URLs`);
 // sitemap-names-2.xml
 writeFileSync("public/sitemap-names-2.xml", urlsetWrap(part2.map(nameEntry)), "utf-8");
 console.log(`sitemap-names-2.xml: ${part2.length.toLocaleString()} URLs`);
+
+// sitemap-names-3.xml (overflow when total > 100,000)
+if (part3.length > 0) {
+  writeFileSync("public/sitemap-names-3.xml", urlsetWrap(part3.map(nameEntry)), "utf-8");
+  console.log(`sitemap-names-3.xml: ${part3.length.toLocaleString()} URLs`);
+}
 
 // sitemap-pets.xml
 writeFileSync("public/sitemap-pets.xml", urlsetWrap(petSlugs.map(petEntry)), "utf-8");
@@ -122,15 +134,17 @@ writeFileSync(
 console.log(`sitemap-static.xml: ${staticPages.length} URLs`);
 
 // sitemap.xml  ← index file, NOT a urlset
+const childSitemaps = [
+  "sitemap-static.xml",
+  "sitemap-names-1.xml",
+  "sitemap-names-2.xml",
+  ...(part3.length > 0 ? ["sitemap-names-3.xml"] : []),
+  "sitemap-pets.xml",
+];
 const index = [
   `<?xml version="1.0" encoding="UTF-8"?>`,
   `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
-  ...[
-    "sitemap-static.xml",
-    "sitemap-names-1.xml",
-    "sitemap-names-2.xml",
-    "sitemap-pets.xml",
-  ].map(
+  ...childSitemaps.map(
     (f) =>
       `  <sitemap>\n    <loc>${BASE_URL}/${f}</loc>\n    <lastmod>${TODAY}</lastmod>\n  </sitemap>`
   ),
@@ -138,5 +152,5 @@ const index = [
 ].join("\n");
 
 writeFileSync("public/sitemap.xml", index, "utf-8");
-console.log(`sitemap.xml: index pointing to 3 child sitemaps`);
-console.log(`Done. Total name URLs: ${slugs.length.toLocaleString()}`);
+console.log(`sitemap.xml: index pointing to ${childSitemaps.length} child sitemaps`);
+console.log(`Done. Total name URLs: ${slugs.length.toLocaleString()}, pet URLs: ${petSlugs.length.toLocaleString()}`);

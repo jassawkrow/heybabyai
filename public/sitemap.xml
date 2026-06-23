@@ -2,14 +2,22 @@
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
     <loc>https://www.heybabyai.com/sitemap-static.xml</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-23</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://www.heybabyai.com/sitemap-names-1.xml</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-23</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://www.heybabyai.com/sitemap-names-2.xml</loc>
-    <lastmod>2026-06-16</lastmod>
+    <lastmod>2026-06-23</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://www.heybabyai.com/sitemap-names-3.xml</loc>
+    <lastmod>2026-06-23</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://www.heybabyai.com/sitemap-pets.xml</loc>
+    <lastmod>2026-06-23</lastmod>
   </sitemap>
 </sitemapindex>
